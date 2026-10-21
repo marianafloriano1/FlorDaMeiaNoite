@@ -1,0 +1,65 @@
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  CUSTOMER ||--o{ CART : owns
+  CUSTOMER ||--o{ FAVORITE : saves
+  ORDER ||--|{ ORDER_ITEM : contains
+  ORDER ||--o{ INVENTORY_RESERVATION : reserves
+  ORDER ||--o| ORDER_INSPECTION : inspected
+  ORDER ||--o| PICKUP_SCHEDULE : scheduled
+  ORDER ||--o| CANCELLATION : cancelled
+  PRODUCT ||--o{ ORDER_ITEM : sold_as
+  PRODUCT ||--o{ PRODUCT_IMAGE : has
+  PRODUCT ||--o{ PRODUCT_TRANSLATION : translated_as
+  PRODUCT ||--o{ INVENTORY_LEDGER_ENTRY : changes
+  EMPLOYEE ||--o{ INVENTORY_LEDGER_ENTRY : records
+  EMPLOYEE ||--o{ AUDIT_EVENT : performs
+  COUPON ||--o{ COUPON_REDEMPTION : redeemed
+  ORDER ||--o{ NOTIFICATION : triggers
+  CUSTOMER {
+    uuid id PK
+    string full_name
+    string email
+    string cpf_encrypted
+    string mobile
+    boolean email_verified
+    boolean mobile_verified
+  }
+  EMPLOYEE {
+    uuid id PK
+    string name
+    string cpf_encrypted
+    string email
+    string contract_object_key
+  }
+  PRODUCT {
+    uuid id PK
+    string name_pt
+    string category
+    int stock_on_hand
+    decimal price_brl
+    boolean active
+  }
+  ORDER {
+    uuid id PK
+    uuid customer_id FK
+    string status
+    datetime created_at
+    datetime reservation_expires_at
+    datetime paid_at
+  }
+  ORDER_ITEM {
+    uuid id PK
+    uuid order_id FK
+    uuid product_id FK
+    int quantity
+    decimal unit_price_brl
+    int consumed_quantity
+  }
+  INVENTORY_LEDGER_ENTRY {
+    uuid id PK
+    uuid product_id FK
+    uuid actor_id FK
+    int delta
+    string reason
+    datetime created_at
+  }

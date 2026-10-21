@@ -1,0 +1,3 @@
+module.exports=[[67724,(a,b,c)=>{b.exports=a.r(18622)},53741,(a,b,c)=>{b.exports=a.r(67724).vendored["react-rsc"].ReactJsxRuntime},27572,a=>{var b=a.i(53741);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"pt-BR",children:(0,b.jsx)("body",{children:a})})},"metadata",0,{title:"Flor da Meia-Noite",description:"Base técnica do site Flor da Meia-Noite."}])}],18622,(a,b,c)=>{b.exports=a.x("next/dist/compiled/next-server/app-page-turbo.runtime.prod.js",()=>require("next/dist/compiled/next-server/app-page-turbo.runtime.prod.js"))},50645,function(a){a.n(a.i(27572))}];
+
+//# sourceMappingURL=%5Broot-of-the-server%5D__0i8l4_hd0frou._.js.map

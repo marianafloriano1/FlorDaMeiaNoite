@@ -1,0 +1,181 @@
+# Flor da Meia-Noite — visão e requisitos
+
+## Estado deste documento
+
+Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório documental especifica o produto e o futuro contrato de implementação; não contém implementação do site. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
+
+## 1. Visão do produto
+
+A Flor da Meia-Noite venderá flores, plantas, arranjos e artigos de jardinagem por um site de comércio eletrônico autoral, em português, inglês, espanhol e russo. O cliente poderá navegar sem conta; para comprar, usar carrinho ou favoritos, deverá se cadastrar e confirmar e-mail e celular. A retirada é presencial. O site reserva estoque e organiza pedidos, mas pagamento, negociação de alterações e eventual reembolso são tratados entre cliente e administrador pelo WhatsApp. O sistema não processa pagamentos.
+
+O visual deverá expressar a identidade gótica e industrial da marca: preto absoluto `#000000`, cinza chumbo `#4A4A4A`, verde musgo `#1E2B22`, fotografia floral saturada, tipografia expressiva e microinterações cuidadosas. A estética não pode reduzir legibilidade, acessibilidade ou clareza das informações de compra.
+
+### Objetivos mensuráveis conhecidos
+
+- Operar cerca de 30 pedidos por dia e suportar picos estimados de 1.000 pessoas simultâneas em datas sazonais.
+- Carregar imagens do conteúdo principal em até 2 segundos sob condições de teste a definir.
+- Admitir indisponibilidade de até 24 horas (RTO máximo inicial) e minimizar perda de dados (RPO a ser fixado no desenho operacional; recomendação preliminar: até 5 minutos para dados transacionais).
+- Fazer teste inicial sem gasto de hospedagem/serviços, mas projetar produção em serviços pagos quando necessário para disponibilidade confiável.
+- Manter o estoque no sistema como controle oficial; não manter o Excel como sistema operacional paralelo. Funcionários cadastrarão produtos individualmente, inclusive fotos e descrições.
+
+## 2. Escopo
+
+### Incluído na primeira versão
+
+Catálogo e páginas de produto; busca e filtros; conta e verificação de e-mail/celular; carrinho e favoritos para clientes cadastrados; cupons; reserva e controle de estoque; fluxo de pedido ligado ao WhatsApp; estados e retirada; painel de administrador e funcionários; notificações por e-mail e SMS; tradução automática para os quatro idiomas; métricas e exportação PDF/Excel; auditoria de estoque; relatórios administrativos; backups, observabilidade e implantação resiliente.
+
+### Fora do escopo inicial
+
+- Entrega em domicílio, frete, roteirização e endereço de entrega.
+- Checkout ou captura de pagamento dentro do site, conciliação bancária automática ou integração com adquirente. Pix, transferência, crédito e débito são acertados no WhatsApp.
+- Integração automática com o Excel atual; a equipe fará o cadastro individual no site.
+- Sincronização com sistema de ponto de venda físico (não existe sistema atual). O estoque online será a fonte oficial após a transição.
+- Aplicativos nativos móveis e programa de fidelidade.
+- Revisão humana das traduções automáticas.
+
+## 3. Atores e permissões
+
+| Ator | Capacidades |
+|---|---|
+| Visitante | Ver catálogo, pesquisar e filtrar produtos e ver alerta de estoque baixo; não usa carrinho nem favoritos. |
+| Cliente autenticado | Gerenciar perfil, comprar, usar carrinho e favoritos, aplicar cupom, acompanhar próprios pedidos, receber notificações e solicitar cancelamento por WhatsApp conforme política divulgada. |
+| Funcionário (cinco contas individuais) | Cadastrar/editar produtos; manter estoque com justificativa obrigatória de até 400 caracteres; conferir pedido e registrar resultado; consultar dados de clientes necessários à comunicação. Permissão para atualizar outros estados do pedido além de registrar conferência permanece PENDENTE. Sem acesso a dados de outros funcionários, relatórios, gestão de contas, cupons ou confirmação de pagamento. |
+| Administrador principal | Todas as ações administrativas; aprovar conferência e confirmar pagamentos; criar/editar/desativar cupons; gerenciar contas de funcionários; cancelar pedidos e decidir itens que retornam ao estoque; relatórios/exportações; configurações da loja. Exige código de segundo fator para ações sensíveis, uma vez por sessão; após 1 hora sem atividade, exige novo código para renovar a sessão. |
+
+Dados completos dos clientes ficam visíveis a funcionários e administrador porque são usados na confirmação pelo WhatsApp. Dados cadastrais e contrato dos funcionários são visíveis apenas ao administrador. A solicitação de direitos sobre dados pessoais é atendida pelo administrador. A loja publicará sua política de privacidade e termos.
+
+## 4. Requisitos funcionais
+
+Cada requisito tem identificador permanente. IDs removidos futuramente devem ser marcados CANCELLED/DEPRECATED, nunca renumerados.
+
+| ID | Requisito e critério verificável | Regras/UCs | Tarefas |
+|---|---|---|---|
+| RF-001 | Visitantes visualizam catálogo, páginas de produto, busca e filtros sem criar conta. Produtos com estoque zero não são listados como compráveis. | RN-001, RN-002; UC-01 | TASK-004, TASK-012 |
+| RF-002 | O catálogo suporta categorias fixas: Buquês, Arranjos, Boxes, Embalagens, Laços, Vasos, Ornamentos, Flores, Plantas, Fertilizantes, Terras, Sementes, Ferramentas de jardinagem, Decorações, Pedras e Insumos. Campos: nome, tipo, descrição, cores, fotos, preço em BRL, categoria, estoque inteiro, ocasião, tamanho, materiais, instruções de cuidado, significado das flores, toxicidade para animais e prazo de validade/perda. | RN-002; UC-01 | TASK-004, TASK-007 |
+| RF-003 | A busca filtra por tipo de flor, cor, tamanho, materiais e faixa de preço; catálogo pode ainda exibir ocasião e demais características. | RN-001; UC-01 | TASK-004 |
+| RF-004 | Cliente registra nome completo, e-mail, CPF brasileiro, telefone celular e senha. E-mail e telefone são verificados antes de finalizar compra; recuperação de senha é por e-mail. | RN-003; UC-02 | TASK-003 |
+| RF-005 | Cliente autenticado administra dados permitidos do próprio perfil e consulta histórico/status dos próprios pedidos; favoritos e carrinho são persistentes por conta. | RN-003, RN-004; UC-02 | TASK-003, TASK-005 |
+| RF-006 | Cliente autenticado adiciona itens ao carrinho, seleciona subconjunto para finalizar e aplica cupom válido antes de enviar pedido. | RN-005, RN-006; UC-03 | TASK-005, TASK-008 |
+| RF-007 | Ao clicar “Finalizar pedido”, o sistema reserva atomicamente o estoque selecionado por 3 horas, mesmo durante a conferência, cria pedido associado ao cadastro e direciona para o WhatsApp da loja com contexto do pedido. | RN-005, RN-007; UC-03 | TASK-005, TASK-006 |
+| RF-008 | Se não houver pagamento confirmado em 3 horas da finalização, pedido é cancelado automaticamente e unidades reservadas voltam ao estoque; cliente pode fazer outro pedido. | RN-007; UC-03, UC-05 | TASK-005, TASK-006 |
+| RF-009 | Equipe registra conferência dos itens; administrador aprova pedido e registra confirmação manual do pagamento após conferi-lo no WhatsApp. Site oferece pagamento apenas via WhatsApp (formas informadas: Pix, transferência, cartão de crédito e débito). | RN-008; UC-04 | TASK-006, TASK-009 |
+| RF-010 | Após confirmação do pagamento integral pelo administrador, pedido entra em preparo, iniciado entre 1 e 2 horas depois; cliente acompanha estados: Aguardando pagamento, Em preparo, Pronto para retirada, Retirado com sucesso, Cancelado. Papel autorizado a atualizar cada estado além da conferência fica pendente. | RN-008, RN-009; UC-04, UC-05 | TASK-006, TASK-009 |
+| RF-011 | Administrador define data e horário de retirada após combinar com cliente no WhatsApp; cliente vê previsão no site. Loja configura endereço e horários: seg-sex 08:00–18:30; sáb-dom 09:00–13:00; feriados e horários especiais configuráveis. Cliente informa quando precisa do produto. | RN-010; UC-04 | TASK-009 |
+| RF-012 | Sistema envia confirmação/lembretes por e-mail: um dia e uma hora antes da retirada; e-mail de pronto; e, para item perecível não retirado, um alerta diário durante a janela de 3 dias úteis. Aviso de estoque baixo fica visível no site a todos; equipe recebe e-mail ao chegar a 7 unidades. | RN-011, RN-012; UC-06 | TASK-010 |
+| RF-013 | Cliente pode pedir cancelamento conforme política divulgada, pelo WhatsApp; ação operacional de cancelar pedido no sistema é exclusiva do administrador. Sistema não calcula nem processa reembolso. | RN-013; UC-05 | TASK-009 |
+| RF-014 | Ao cancelar: “não preparado” devolve todos os itens; “em preparo” exige selecionar itens já usados e devolve apenas os não selecionados; “finalizado” não devolve item. Toda devolução é automática após seleção/confirmação do administrador. | RN-014; UC-05 | TASK-009 |
+| RF-015 | Administrador cria cupons percentuais ou de valor fixo, com validade e restrições opcionais definidas por ele. Sem limite de usos padrão; regras de acumulação e mínimo de compra precisam ser configuráveis ou marcadas pendentes antes de implementação. | RN-006; UC-03 | TASK-008 |
+| RF-016 | Funcionários cadastrados individualmente têm nome, idade, celular, e-mail, CPF, data de contratação e anexo do contrato. Apenas administrador cria, edita e bloqueia contas e acessa esses dados/anexos. | RN-015; UC-07 | TASK-003, TASK-009 |
+| RF-017 | Cada alteração de estoque registra usuário, data/hora, valores anterior/novo e justificativa obrigatória de até 400 caracteres. E-mail de estoque baixo é deduplicado enquanto quantidade permanecer em 7 ou menos; nova notificação após recompor e voltar a cruzar o limite. | RN-016; UC-07 | TASK-007 |
+| RF-018 | Painel do administrador exibe faturamento semanal e mensal por data do pedido e data da confirmação do pagamento, pedidos/cancelamentos e produtos mais/menos vendidos, adicionados ao carrinho e favoritados. Exportação em Excel ou PDF escolhida pelo administrador. | RN-017; UC-08 | TASK-011 |
+| RF-019 | Textos fixos e conteúdo de produtos são traduzidos automaticamente do português para inglês, espanhol e russo para os clientes, sem fluxo de revisão. Preços permanecem em reais (BRL). | RN-018; UC-01 | TASK-004 |
+| RF-020 | Cliente pode verificar defeito/dano ao retirar, ou retornar à loja com o produto; equipe registra ocorrência para tratamento direto pelo WhatsApp. | RN-013; UC-05 | TASK-009 |
+
+## 5. Regras de negócio
+
+- **RN-001 — Navegação pública:** catálogo e filtros são públicos. Para carrinho, favoritos e compra, autenticação é obrigatória.
+- **RN-002 — Visibilidade:** estoque é inteiro e nunca negativo; produto com zero unidades não aparece como disponível/comprável. Alerta de baixo estoque aparece publicamente conforme desenho visual, sem expor dado pessoal.
+- **RN-003 — Elegibilidade:** compra exige CPF brasileiro validável e confirmação de e-mail e celular; público de compra é pessoa com CPF brasileiro. Validação não deve alegar verificar nacionalidade além da validação do CPF.
+- **RN-004 — Isolamento:** cliente vê seus próprios pedidos e perfil; equipe vê os dados de clientes necessários para comunicação; apenas administrador vê dados e anexos dos funcionários.
+- **RN-005 — Reserva concorrente:** reserva de todo item selecionado é transacional/atômica. Se não houver saldo para qualquer linha, pedido/reserva não é criado parcialmente. Carrinho não reserva estoque antes de finalizar.
+- **RN-006 — Cupom:** validade é obrigatória. Limite de uso/restrições são opcionais, cadastrados pelo administrador. Acumulação entre cupons, mínimo de compra, incidência sobre produtos e arredondamento permanecem PENDENTES DE DECISÃO.
+- **RN-007 — Prazo de pagamento:** timer inicia no clique final, dura 3 horas inclusive durante a conferência. Expiração cancela pedido pendente e libera reservas uma única vez. Se pagamento confirmado exatamente no limite, prevalece a transição serializada registrada primeiro; política final deve ser definida em especificação técnica.
+- **RN-008 — Verificação/pagamento:** funcionários registram conferência; apenas administrador aprova e confirma pagamento, manualmente após o WhatsApp. Nenhuma integração de pagamento é feita pelo sistema. Produção começa entre 1 e 2 horas da confirmação integral.
+- **RN-009 — Status:** transições válidas são controladas, auditadas e não podem saltar estados sem ação autorizada. Apenas a conferência do pedido por funcionário e aprovação/confirmação/cancelamento pelo administrador estão explicitamente decididas; autorização para “pronto” e “retirado” permanece PENDENTE.
+- **RN-010 — Retirada:** retirada é presencial no endereço configurável. Horários regulares são seg-sex 08:00–18:30 e sáb-dom 09:00–13:00; administrador poderá configurar exceção de feriado/horário. A previsão exata é definida pelo administrador após acordo via WhatsApp.
+- **RN-011 — Perecíveis:** a contagem começa na data combinada de retirada; tolerância até 3 dias úteis (segunda a sábado, calendário de feriados configurável), com um e-mail diário. Após prazo, loja descarta e pedido não é reembolsado; o sistema encerra/cancela conforme ação autorizada e registra descarte. Duas tentativas de contato pelo WhatsApp, com intervalo de 1 hora, começam após 2 horas do horário combinado.
+- **RN-012 — Não perecíveis:** ficam aguardando até uma semana após a data combinada; após isso, cancelamento sem reembolso. Não foi definido se semana significa 7 dias corridos ou calendário comercial: PENDENTE DE DECISÃO.
+- **RN-013 — Cancelamento/financeiro:** acertos de reembolso são tratados no WhatsApp. Site não determina elegibilidade, percentual ou transferência do reembolso. A política exibida antes de pagar precisa ser aprovada pela loja. O cliente pode solicitar cancelamento; apenas administrador executa a ação no sistema.
+- **RN-014 — Retorno de estoque:** não preparado = todas as unidades voltam; em preparo = administrador identifica itens já usados, somente não usados voltam; finalizado = nenhum item volta. Para prazo expirado de pedido perecível descartado, unidades descartadas não retornam.
+- **RN-015 — Equipe:** cinco funcionários individuais no lançamento, contas criadas/bloqueadas só pelo administrador; atributos pessoais e contrato protegidos do acesso da equipe.
+- **RN-016 — Auditoria de estoque:** justificativa obrigatória ≤400 caracteres, usuário e carimbo de data/hora imutáveis. Alerta de e-mail dispara ao cruzar para ≤7 unidades, sem repetição contínua; rearmado ao estoque voltar a >7.
+- **RN-017 — Relatórios:** somente administrador acessa. Faturamento é baseado em pagamentos confirmados; apresentar também data do pedido separadamente. Definições de semana, fuso e devoluções/cancelamentos são configuráveis/validadas na implementação.
+- **RN-018 — Tradução:** português é idioma de origem; inglês, espanhol e russo são gerados automaticamente e armazenados em cache com versão do conteúdo/origem. Erros de tradução não impedem compra; exibir português como fallback. Preço é sempre BRL.
+
+## 6. Requisitos não funcionais
+
+| ID | Requisito verificável |
+|---|---|
+| RNF-001 | Suportar pico de 1.000 usuários simultâneos em teste de carga acordado, sem perda de reserva/estoque e mantendo APIs principais dentro de metas de latência definidas na tarefa de performance. |
+| RNF-002 | Imagens principais visíveis em ≤2 s no cenário de rede/dispositivo definido; usar formatos modernos, dimensões responsivas, CDN e lazy loading fora da primeira dobra. |
+| RNF-003 | RTO máximo de 24 h. RPO deve ser “mínimo possível”; arquitetura propõe PITR com meta inicial de até 5 minutos, pendente de orçamento/aprovação operacional. Backup automático, criptografado, cópia independente e ensaio de restauração antes do lançamento. |
+| RNF-004 | Disponibilidade confiável em produção, monitorada. SLO inicial a contratar: 99,9% mensal como recomendação para avaliação, não compromisso já aprovado; definição do objetivo e custo permanece PENDENTE DE DECISÃO. |
+| RNF-005 | Segredos fora do código; TLS; menor privilégio; autenticação forte; proteção contra abuso de OTP; logs sem senha, token ou conteúdo desnecessário de CPF; trilha de auditoria de ações privilegiadas e estoque. |
+| RNF-006 | Dados pessoais e anexos têm acesso por função; anexos privados; exportações limitadas a administrador e auditadas. Política de retenção/exclusão e prazos legais serão aprovados pela loja. |
+| RNF-007 | Interface responsiva, teclado acessível, foco visível, contraste legível sobre fundo escuro, textos alternativos e conformidade WCAG 2.2 AA como meta de projeto. |
+| RNF-008 | Horário e prazos calculados no fuso da loja `America/Sao_Paulo`; feriados e exceções editáveis. Todos os eventos armazenados com timestamp UTC e apresentados no fuso local. |
+| RNF-009 | Falha de e-mail/SMS/Google Translation é monitorada, retentada de forma idempotente e não duplica pedidos, reservas, pagamento ou mudança de estoque. |
+| RNF-010 | Operações críticas (reserva, expiração, baixa/retorno de estoque, confirmação de pagamento, cancelamento) são idempotentes, transacionais e auditáveis. |
+| RNF-011 | A aplicação deverá obrigatoriamente executar em containers. Os componentes executáveis do produto (web/API e workers) serão empacotados como imagens compatíveis com OCI e deverão rodar em Docker ou runtime de containers equivalente, localmente e nos ambientes de implantação. Serviços gerenciados externos, como PostgreSQL gerenciado, não precisam ser containerizados. |
+
+## 7. Casos de uso
+
+- **UC-01 — Descobrir produtos:** visitante/cliente consulta catálogo traduzido, pesquisa, filtra e abre produto; zero estoque não pode ser comprado.
+- **UC-02 — Criar conta e perfil:** visitante informa nome, CPF, e-mail, celular e senha; confirma e-mail/SMS; recupera senha por e-mail.
+- **UC-03 — Montar e enviar pedido:** cliente cadastrado usa carrinho/favoritos, escolhe itens e cupom, seleciona itens a comprar; finalização cria reserva de 3h e abre WhatsApp.
+- **UC-04 — Conferir, aprovar e receber pagamento:** funcionário registra conferência; administrador aprova e marca pagamento após confirmação por WhatsApp; define retirada; equipe prepara e atualiza estados.
+- **UC-05 — Cancelar/retirar pedido:** administrador cancela e classifica uso dos itens; ou equipe registra retirada. Sistema calcula devolução de estoque segundo RN-014 e envia comunicações.
+- **UC-06 — Notificações:** sistema envia e-mail/SMS de verificação, avisos, lembretes, pronto e perecibilidade; equipe recebe e-mail de baixo estoque.
+- **UC-07 — Administrar catálogo/estoque/equipe:** equipe mantém produtos e estoque com justificativa; administrador mantém cupons, contas e configuração.
+- **UC-08 — Analisar operação:** administrador filtra relatórios por semana/mês e base temporal, consulta métricas e exporta PDF ou Excel.
+
+## 8. Modelo conceitual
+
+Entidades principais: `Customer`, `Employee`, `Product`, `Category` (lista fixa), `ProductTranslation`, `ProductImage`, `InventoryLedgerEntry`, `Cart`, `CartItem`, `Favorite`, `Coupon`, `CouponRedemption`, `Order`, `OrderItem`, `InventoryReservation`, `OrderInspection`, `Cancellation`, `PickupSchedule`, `Notification`, `AuditEvent`, `StoreSchedule`, `HolidayException`.
+
+Relacionamentos: cliente 1:N pedidos/carrinhos/favoritos; pedido 1:N linhas e reservas; produto 1:N imagens/traduções/movimentos de estoque; pedido 0..1 inspeção, pagamento confirmado por evento administrativo, programação de retirada e cancelamento; funcionário N:N operações auditadas. Estoque atual deriva de saldo controlado e razão de movimentos, não de edição silenciosa.
+
+## 8.1 Diagramas
+
+- [Contexto do sistema](docs/diagrams/context.mmd)
+- [Modelo de domínio](docs/diagrams/domain-model.mmd)
+- [Ciclo de vida do pedido](docs/diagrams/order-lifecycle.mmd)
+- [Sequência de checkout e reserva](docs/diagrams/checkout-sequence.mmd)
+- [Arquitetura de referência](docs/diagrams/architecture.mmd)
+- [Detalhamento arquitetural](docs/architecture/overview.md)
+
+## 9. Interfaces e integrações
+
+- **Google Cloud Translation API**: tradução dinâmica/cache de textos fixos e conteúdo português de produto; segredo somente no backend; uso medido e com limite de gasto.
+- **WhatsApp**: abrir conversa com número da loja e identificador/resumo mínimo do pedido. Sem WhatsApp Business API no escopo; conversas, negociação, pagamento e reembolso são externos.
+- **E-mail transacional**: verificação, recuperação, situação/pronto, lembretes, perecíveis e alertas internos. Provedor e domínio de envio serão selecionados antes da implantação.
+- **SMS**: verificação do celular e OTP administrativo; fornecedor, custos e política antifraude a selecionar.
+- **PDF/Excel**: geração de exportações no servidor respeitando autorização de administrador.
+
+## 10. Arquitetura recomendada e decisões
+
+Recomendação preliminar para produção: aplicação web TypeScript/Next.js em contêiner no **Google Cloud Run**, PostgreSQL gerenciado **Cloud SQL** em configuração regional HA, armazenamento privado de imagens/anexos em **Cloud Storage**, CDN para imagens, **Cloud Tasks/Pub/Sub** para temporizadores e notificações, Secret Manager, Cloud Logging/Monitoring/Error Reporting, Cloud Translation API e provedor transacional de SMS/e-mail. Região brasileira a avaliar (latência, preço, disponibilidade de cada serviço). Cloud Run oferece autoscaling configurável; Cloud SQL HA usa zonas redundantes e backups/PITR. Isso é uma arquitetura inicial a confirmar por ADR e orçamento, não promessa de disponibilidade automática. Fontes oficiais consultadas em 2026-09-23: [Cloud Run autoscaling](https://docs.cloud.google.com/run/docs/about-instance-autoscaling), [Cloud Run concurrency](https://docs.cloud.google.com/run/docs/about-concurrency), [Cloud SQL HA](https://docs.cloud.google.com/sql/docs/postgres/high-availability), [Cloud SQL recovery](https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/restore), [Cloud Translation pricing](https://cloud.google.com/translate/pricing).
+
+O protótipo/teste deverá usar projeto e credenciais isolados, dados sintéticos, limites de orçamento e serviços gratuitos/emuladores quando possível. O envio real de SMS, domínio, serviço de e-mail, Google Translation e alta disponibilidade de produção podem gerar custos. Vercel Hobby não é recomendação para a loja porque seus termos limitam o uso não comercial; preços/termos foram consultados em [Vercel Hobby](https://vercel.com/docs/plans/hobby). Não armazenar documentos reais ou dados de clientes no ambiente de teste.
+
+## 11. Pendências explícitas
+
+1. Endereço, nome/número oficial do WhatsApp, domínio, logo/arquivos da marca e contatos de suporte.
+2. Regra de cupons: acumulação, mínimo de compra, escopo por produto/categoria, limite por cliente, arredondamento e reutilização após cancelamento.
+3. Significado da janela de uma semana para não perecíveis (7 dias corridos ou outra contagem) e ação do sistema após prazo.
+4. A política de reembolso fornecida teve formulações conflitantes. O sistema não calcula/processa reembolso; texto legal definitivo e processo são responsabilidade da loja e devem estar visíveis antes do pagamento. Cancelamento operacional/retorno de estoque permanece definido em RN-014.
+5. Permissão para funcionário atualizar estados “pronto para retirada” e “retirado” além do registro da conferência.
+6. Frequência de backup/RPO final, SLO mensal, retenção de dados, retenção de anexos e requisitos legais de privacidade.
+7. Ajuste das categorias de ocasião/tipo e tradução automática de toxicidade/cuidados; conteúdo botânico deve ser fornecido pela loja e não inventado pela tradução.
+8. Texto/configuração do alerta público de última unidade; alerta de equipe no limite 7 será deduplicado conforme RN-016.
+
+## 12. Matriz de rastreabilidade resumida
+
+| Cadeia | Destino de implementação |
+|---|---|
+| RF-001..003 → RN-001/002/018 → RNF-002/007 → UC-01 → Product/Translation/Image → API catálogo → TASK-004/012 |
+| RF-004..005 → RN-003/004 → RNF-005/006 → UC-02 → Customer/Employee → API identidade/perfil → TASK-003 |
+| RF-006..008/015 → RN-005..007 → RNF-001/010 → UC-03 → Cart/Coupon/Order/Reservation → API carrinho/checkout → TASK-005/008 |
+| RF-009..014/020 → RN-008..014 → RNF-009/010 → UC-04/05 → Order/Inspection/Pickup/Cancellation/Ledger → API pedidos → TASK-006/009 |
+| RF-012/017 → RN-011/012/016 → RNF-008/009 → UC-06/07 → Notification/Ledger → workers de notificação → TASK-007/010 |
+| RF-018 → RN-017 → RNF-006 → UC-08 → Order/Ledger/Favorite/CartEvent → API relatórios/exportação → TASK-011 |
+| Todo o produto → RNF-001..011 → todos UCs/entidades → arquitetura/operação → TASK-001/002/013/014 |
+
+## 13. Critérios globais de aceite
+
+- Todos RFs têm critérios verificáveis e UCs; regras sem decisão são identificadas como pendentes, não codificadas como fatos.
+- Fluxos de concorrência de reserva e expiração não geram saldo negativo nem liberam duas vezes.
+- Permissões de funcionário/administrador e acesso aos dados pessoais são testados por autorização negativa.
+- Alertas e jobs podem ser repetidos sem efeitos duplicados.
+- O desenho de capacidade é validado com 1.000 sessões concorrentes simuladas em cenário definido; imagens principais testadas em ≤2 s nas condições acordadas.
+- Backups e restauração são demonstrados; tarefas de implementação não declaram qualidade sem evidências registradas.

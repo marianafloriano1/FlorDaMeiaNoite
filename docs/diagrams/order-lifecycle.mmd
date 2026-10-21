@@ -1,0 +1,11 @@
+stateDiagram-v2
+  [*] --> AguardandoPagamento: checkout / reserva 3h
+  AguardandoPagamento --> EmPreparo: administrador aprova e confirma pagamento
+  AguardandoPagamento --> Cancelado: expira 3h / devolve reserva
+  AguardandoPagamento --> Cancelado: administrador cancela / item não preparado
+  EmPreparo --> ProntoRetirada: equipe atualiza
+  EmPreparo --> Cancelado: administrador cancela / seleciona itens já usados
+  ProntoRetirada --> Retirado: equipe confirma retirada
+  ProntoRetirada --> Cancelado: administrador encerra após prazo / regra aplicável
+  Cancelado --> [*]
+  Retirado --> [*]

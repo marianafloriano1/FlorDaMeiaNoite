@@ -1,0 +1,22 @@
+sequenceDiagram
+  actor C as Cliente cadastrado
+  participant W as Site
+  participant A as API
+  participant D as PostgreSQL
+  participant Q as Fila de tarefas
+  participant X as WhatsApp
+  C->>W: Seleciona itens e finaliza
+  W->>A: Enviar pedido + seleção + cupom
+  A->>D: Validar preço/cupom e reservar em transação
+  alt Estoque suficiente
+    D-->>A: Pedido e reserva de 3h criados
+    A->>Q: Agendar expiração idempotente
+    A-->>W: Número do pedido + link WhatsApp
+    W-->>C: Abrir WhatsApp da loja
+    C->>X: Combinar pagamento e retirada
+    Note over A,D: Funcionário registra conferência
+    Note over A,D: Administrador aprova e confirma pagamento
+  else Estoque insuficiente
+    D-->>A: Rollback integral
+    A-->>W: Exibir indisponibilidade e atualizar carrinho
+  end
