@@ -9,20 +9,27 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
+    "db:migrate": "tsx src/lib/db/migrate.ts up",
+    "db:rollback": "tsx src/lib/db/migrate.ts down",
+    "test:db": "node --import=tsx --test tests/db/task002.test.ts",
     "lint": "biome check src next.config.ts",
     "format": "biome format --write src next.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "kysely": "0.29.7",
     "next": "16.4.2",
+    "pg": "8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.3",
+    "tsx": "4.23.15",
     "typescript": "5.9.3"
   }
 }

@@ -2,7 +2,7 @@
 
 ## Estado deste documento
 
-Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório documental especifica o produto e o futuro contrato de implementação; não contém implementação do site. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
+Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório contém a base técnica inicial e especifica as funcionalidades futuras; catálogo, contas, pedidos e demais fluxos de negócio ainda não estão implementados. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
 
 ## 1. Visão do produto
 
@@ -199,7 +199,22 @@ curl --fail http://localhost:3000/
 
 No PowerShell, a verificação equivalente é `Invoke-WebRequest -Uri http://localhost:3000/`. O container é removido ao encerrar porque usa `--rm`. Para parar, use `Ctrl+C` no terminal que o iniciou. Não instale dependências no host para executar a imagem; a construção instala o lockfile dentro do container.
 
-O ambiente de desenvolvimento/teste local usa somente a imagem Docker, sem credenciais, endpoints de produção ou dados pessoais. A base inicial não requer variáveis de ambiente. Quando integrações forem introduzidas em tarefas futuras, cada ambiente deverá receber configuração própria; segredos de teste e produção não devem ser versionados ou compartilhados.
+O ambiente local usa imagens Docker, dados sintéticos e configuração de teste; não usa endpoints de produção ou dados pessoais. A página inicial não requer variáveis de banco; migrations e a rota de saúde do PostgreSQL exigem `DATABASE_URL` e `DB_POOL_MAX`. Cada ambiente deverá receber configuração própria; segredos de teste e produção não devem ser versionados ou compartilhados.
+
+### Persistência PostgreSQL local (TASK-002)
+
+A camada de consultas usa Kysely com PostgreSQL (`pg`). O comando de migration é explícito; a aplicação não altera o banco durante a inicialização. Para um banco de teste descartável, execute PostgreSQL 17.11 localmente em container e forneça `DATABASE_URL` e `DB_POOL_MAX` no ambiente do processo. `.env.example` é apenas uma referência com placeholder; os comandos abaixo definem as variáveis no PowerShell. `tsx` não carrega automaticamente `.env.local`. Nunca coloque credenciais reais em arquivos rastreados.
+
+```powershell
+docker run --rm --detach --name flor-task002-postgres --publish 127.0.0.1:54329:5432 --env POSTGRES_PASSWORD=local-only-change-me --env POSTGRES_DB=flor_test postgres@sha256:eee6c6e1b0894fa4fe0075eb054af9fd1cf39a35321c2d4110626cfe506411fb
+$env:DATABASE_URL = 'postgresql://postgres:local-only-change-me@127.0.0.1:54329/flor_test'
+$env:DB_POOL_MAX = '2'
+npm run db:migrate
+npm run test:db
+npm run db:rollback
+```
+
+O comando de rollback remove apenas o schema vazio `app` no banco apontado, sem `CASCADE`; execute-o somente no banco descartável. Encerre o container com `docker stop flor-task002-postgres`. O pool é singleton por processo e sua capacidade de produção ainda precisa ser dimensionada em tarefa operacional posterior. Consulte ADR-006 para a decisão e os limites.
 
 ### CI
 
