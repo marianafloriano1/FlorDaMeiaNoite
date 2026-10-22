@@ -179,3 +179,36 @@ O protótipo/teste deverá usar projeto e credenciais isolados, dados sintético
 - Alertas e jobs podem ser repetidos sem efeitos duplicados.
 - O desenho de capacidade é validado com 1.000 sessões concorrentes simuladas em cenário definido; imagens principais testadas em ≤2 s nas condições acordadas.
 - Backups e restauração são demonstrados; tarefas de implementação não declaram qualidade sem evidências registradas.
+
+## 14. Desenvolvimento, container e ambientes
+
+### Execução local e validação do ambiente de teste
+
+O esqueleto não conecta a serviços externos nem usa dados de clientes. Para construir e executar a aplicação em um container local:
+
+```sh
+docker build --pull --tag flor-da-meia-noite:local .
+docker run --rm --name flor-da-meia-noite-test -p 127.0.0.1:3000:3000 flor-da-meia-noite:local
+```
+
+Em outro terminal, verifique a resposta da página inicial:
+
+```sh
+curl --fail http://localhost:3000/
+```
+
+No PowerShell, a verificação equivalente é `Invoke-WebRequest -Uri http://localhost:3000/`. O container é removido ao encerrar porque usa `--rm`. Para parar, use `Ctrl+C` no terminal que o iniciou. Não instale dependências no host para executar a imagem; a construção instala o lockfile dentro do container.
+
+O ambiente de desenvolvimento/teste local usa somente a imagem Docker, sem credenciais, endpoints de produção ou dados pessoais. A base inicial não requer variáveis de ambiente. Quando integrações forem introduzidas em tarefas futuras, cada ambiente deverá receber configuração própria; segredos de teste e produção não devem ser versionados ou compartilhados.
+
+### CI
+
+O workflow `.github/workflows/ci.yml` é executado em pushes para `master` e branches `task/**`, além de pull requests para `master`. Ele instala dependências com `npm ci`, executa lint, verificação de tipos e build, e constrói a imagem OCI. O workflow não publica imagens, não faz deploy e não usa secrets. A execução real no GitHub depende de publicar a branch ou abrir um pull request; confira a quota disponível do repositório antes de qualquer uso que possa gerar cobrança.
+
+### Deploy de teste e rollback
+
+A validação gratuita desta etapa é o container local descrito acima. O ADR-001 aponta o Google Cloud Run como direção de arquitetura, mas nenhum projeto, registry, serviço, domínio, secret ou recurso de nuvem é criado por esta tarefa. Um deploy de teste no Cloud Run depende de um projeto de teste isolado, região e configuração aprovadas, imagem identificada por SHA e autorização específica de infraestrutura e billing; não use recursos ou dados de produção.
+
+Quando esse deploy for autorizado, siga esta sequência: (1) confirmar quota e orçamento; (2) criar/selecionar um projeto Google Cloud exclusivo de teste e um repositório de imagens separado; (3) construir a imagem a partir do lockfile e publicá-la com tag do commit e digest registrados; (4) criar um serviço Cloud Run de teste na região aprovada, com acesso restrito e somente configuração/segredos de teste; (5) verificar a rota inicial, logs e revisão implantada. Não reutilize projeto, registry, base de dados, domínio ou credenciais de produção. Os identificadores do projeto, região, registry e política de acesso permanecem parâmetros a serem fornecidos/aprovados antes do deploy.
+
+Para rollback local, pare o container atual e execute a tag da última imagem local conhecida como válida. Para um futuro serviço Cloud Run, retorne o tráfego à última revisão saudável. Não há deploy de nuvem nesta etapa; portanto, nenhum rollback de serviço remoto foi executado.

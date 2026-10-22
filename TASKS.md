@@ -12,7 +12,7 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-001 — Base do repositório e ambientes
 
-- **Status:** READY | **DEPENDS_ON:** nenhuma | **RF/RN/RNF/UC/ADR:** RNF-005, RNF-009, RNF-011; transversal; ADR-001.
+- **Status:** IN_PROGRESS | **Branch:** `task/TASK-001-base-repositorio-ambientes` | **DEPENDS_ON:** nenhuma | **RF/RN/RNF/UC/ADR:** RNF-005, RNF-009, RNF-011; transversal; ADR-001.
 - **Objetivo:** estruturar aplicação e automação de desenvolvimento/implantação com ambientes separados de teste e produção.
 - **Allowed Changes:** estrutura do app TypeScript/Next.js; container; lint/format/build; configuração de ambiente; pipeline CI; documentação inicial de execução e deploy.
 - **Incidental:** arquivos de ignore e scripts mínimos de desenvolvimento diretamente necessários.
