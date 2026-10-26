@@ -2,7 +2,7 @@
 
 ## Estado deste documento
 
-Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório documental especifica o produto e o futuro contrato de implementação; não contém implementação do site. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
+Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório contém a base técnica inicial e especifica as funcionalidades futuras; catálogo, contas, pedidos e demais fluxos de negócio ainda não estão implementados. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
 
 ## 1. Visão do produto
 
@@ -179,3 +179,51 @@ O protótipo/teste deverá usar projeto e credenciais isolados, dados sintético
 - Alertas e jobs podem ser repetidos sem efeitos duplicados.
 - O desenho de capacidade é validado com 1.000 sessões concorrentes simuladas em cenário definido; imagens principais testadas em ≤2 s nas condições acordadas.
 - Backups e restauração são demonstrados; tarefas de implementação não declaram qualidade sem evidências registradas.
+
+## 14. Desenvolvimento, container e ambientes
+
+### Execução local e validação do ambiente de teste
+
+O esqueleto não conecta a serviços externos nem usa dados de clientes. Para construir e executar a aplicação em um container local:
+
+```sh
+docker build --pull --tag flor-da-meia-noite:local .
+docker run --rm --name flor-da-meia-noite-test -p 127.0.0.1:3000:3000 flor-da-meia-noite:local
+```
+
+Em outro terminal, verifique a resposta da página inicial:
+
+```sh
+curl --fail http://localhost:3000/
+```
+
+No PowerShell, a verificação equivalente é `Invoke-WebRequest -Uri http://localhost:3000/`. O container é removido ao encerrar porque usa `--rm`. Para parar, use `Ctrl+C` no terminal que o iniciou. Não instale dependências no host para executar a imagem; a construção instala o lockfile dentro do container.
+
+O ambiente local usa imagens Docker, dados sintéticos e configuração de teste; não usa endpoints de produção ou dados pessoais. A página inicial não requer variáveis de banco; migrations e a rota de saúde do PostgreSQL exigem `DATABASE_URL` e `DB_POOL_MAX`. Cada ambiente deverá receber configuração própria; segredos de teste e produção não devem ser versionados ou compartilhados.
+
+### Persistência PostgreSQL local (TASK-002)
+
+A camada de consultas usa Kysely com PostgreSQL (`pg`). O comando de migration é explícito; a aplicação não altera o banco durante a inicialização. Para um banco de teste descartável, execute PostgreSQL 17.11 localmente em container e forneça `DATABASE_URL` e `DB_POOL_MAX` no ambiente do processo. `.env.example` é apenas uma referência com placeholder; os comandos abaixo definem as variáveis no PowerShell. `tsx` não carrega automaticamente `.env.local`. Nunca coloque credenciais reais em arquivos rastreados.
+
+```powershell
+docker run --rm --detach --name flor-task002-postgres --publish 127.0.0.1:54329:5432 --env POSTGRES_PASSWORD=local-only-change-me --env POSTGRES_DB=flor_test postgres@sha256:eee6c6e1b0894fa4fe0075eb054af9fd1cf39a35321c2d4110626cfe506411fb
+$env:DATABASE_URL = 'postgresql://postgres:local-only-change-me@127.0.0.1:54329/flor_test'
+$env:DB_POOL_MAX = '2'
+npm run db:migrate
+npm run test:db
+npm run db:rollback
+```
+
+O comando de rollback remove apenas o schema vazio `app` no banco apontado, sem `CASCADE`; execute-o somente no banco descartável. Encerre o container com `docker stop flor-task002-postgres`. O pool é singleton por processo e sua capacidade de produção ainda precisa ser dimensionada em tarefa operacional posterior. Consulte ADR-006 para a decisão e os limites.
+
+### CI
+
+O workflow `.github/workflows/ci.yml` é executado em pushes para `master` e branches `task/**`, além de pull requests para `master`. Ele instala dependências com `npm ci`, executa lint, verificação de tipos e build, e constrói a imagem OCI. O workflow não publica imagens, não faz deploy e não usa secrets. A execução real no GitHub depende de publicar a branch ou abrir um pull request; confira a quota disponível do repositório antes de qualquer uso que possa gerar cobrança.
+
+### Deploy de teste e rollback
+
+A validação gratuita desta etapa é o container local descrito acima. O ADR-001 aponta o Google Cloud Run como direção de arquitetura, mas nenhum projeto, registry, serviço, domínio, secret ou recurso de nuvem é criado por esta tarefa. Um deploy de teste no Cloud Run depende de um projeto de teste isolado, região e configuração aprovadas, imagem identificada por SHA e autorização específica de infraestrutura e billing; não use recursos ou dados de produção.
+
+Quando esse deploy for autorizado, siga esta sequência: (1) confirmar quota e orçamento; (2) criar/selecionar um projeto Google Cloud exclusivo de teste e um repositório de imagens separado; (3) construir a imagem a partir do lockfile e publicá-la com tag do commit e digest registrados; (4) criar um serviço Cloud Run de teste na região aprovada, com acesso restrito e somente configuração/segredos de teste; (5) verificar a rota inicial, logs e revisão implantada. Não reutilize projeto, registry, base de dados, domínio ou credenciais de produção. Os identificadores do projeto, região, registry e política de acesso permanecem parâmetros a serem fornecidos/aprovados antes do deploy.
+
+Para rollback local, pare o container atual e execute a tag da última imagem local conhecida como válida. Para um futuro serviço Cloud Run, retorne o tráfego à última revisão saudável. Não há deploy de nuvem nesta etapa; portanto, nenhum rollback de serviço remoto foi executado.

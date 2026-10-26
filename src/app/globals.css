@@ -1,0 +1,79 @@
+:root {
+  color-scheme: dark;
+  --color-black: #000000;
+  --color-charcoal: #4a4a4a;
+  --color-moss: #1e2b22;
+  --color-paper: #f5f1e8;
+  --color-muted: #cbc6bc;
+  --color-accent: #bd4651;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 50% 35%, rgb(30 43 34 / 52%), transparent 58%), var(--color-black);
+  color: var(--color-paper);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.page-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 2rem;
+}
+
+.intro {
+  width: min(100%, 48rem);
+  padding: clamp(2rem, 7vw, 5rem);
+  border: 1px solid rgb(245 241 232 / 18%);
+  background: linear-gradient(145deg, rgb(74 74 74 / 18%), rgb(0 0 0 / 70%));
+  box-shadow: 0 2rem 6rem rgb(0 0 0 / 45%);
+}
+
+.eyebrow {
+  margin: 0 0 1.5rem;
+  color: #d5b7a0;
+  font-family: Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+
+h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 5.25rem);
+  font-weight: 400;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.description {
+  max-width: 42rem;
+  margin: 1.75rem 0 0;
+  color: var(--color-muted);
+  font-family: Arial, sans-serif;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.7;
+}
+
+.environment {
+  display: inline-block;
+  margin: 2rem 0 0;
+  padding: 0.55rem 0.8rem;
+  border-left: 3px solid var(--color-accent);
+  background: rgb(0 0 0 / 36%);
+  color: var(--color-paper);
+  font-family: Arial, sans-serif;
+  font-size: 0.875rem;
+}
