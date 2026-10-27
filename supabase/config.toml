@@ -1,0 +1,77 @@
+project_id = "flor-da-meia-noite-local"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[local_smtp]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "10MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = true
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+[auth.sms.test_otp]
+15555550100 = "123456"
+15555550101 = "123456"
+15555550102 = "123456"
+15555550103 = "123456"
+15555550104 = "123456"
+15555550105 = "123456"
+15555550107 = "123456"
+15555550108 = "123456"
+15555550109 = "123456"
+15555550110 = "123456"
+15555550111 = "123456"
+15555550112 = "123456"
+15555550113 = "123456"
+15555550114 = "123456"
+
+
+
+[auth.mfa]
+max_enrolled_factors = 5
+
+[auth.mfa.phone]
+enroll_enabled = true
+verify_enabled = true
+max_frequency = "60s"
+
+# Local-only sink: captures generated SMS OTP in a private test table.
+# Do not configure this hook in hosted/production Supabase projects.
+[auth.hook.send_sms]
+enabled = true
+uri = "pg-functions://postgres/public/capture_local_sms_otp"

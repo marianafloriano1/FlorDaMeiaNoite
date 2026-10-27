@@ -5,3 +5,9 @@ coverage/
 *.tsbuildinfo
 .env*
 !.env.example
+.npm-cache/
+.supabase-home/
+firebase-debug.log
+*-debug.log
+
+supabase/.temp/

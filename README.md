@@ -22,7 +22,7 @@ O visual deverá expressar a identidade gótica e industrial da marca: preto abs
 
 ### Incluído na primeira versão
 
-Catálogo e páginas de produto; busca e filtros; conta e verificação de e-mail/celular; carrinho e favoritos para clientes cadastrados; cupons; reserva e controle de estoque; fluxo de pedido ligado ao WhatsApp; estados e retirada; painel de administrador e funcionários; notificações por e-mail e SMS; tradução automática para os quatro idiomas; métricas e exportação PDF/Excel; auditoria de estoque; relatórios administrativos; backups, observabilidade e implantação resiliente.
+Catálogo e páginas de produto; busca e filtros; conta e verificação de e-mail/celular; carrinho e favoritos para clientes cadastrados; cupons; reserva e controle de estoque; fluxo de pedido ligado ao WhatsApp; estados e retirada; painel de administrador e funcionários; notificações por e-mail e SMS; conteúdo em português com opção de visualizar traduções persistidas em inglês, espanhol ou russo; métricas e exportação PDF/Excel; auditoria de estoque; relatórios administrativos; backups, observabilidade e implantação resiliente.
 
 ### Fora do escopo inicial
 
@@ -31,7 +31,6 @@ Catálogo e páginas de produto; busca e filtros; conta e verificação de e-mai
 - Integração automática com o Excel atual; a equipe fará o cadastro individual no site.
 - Sincronização com sistema de ponto de venda físico (não existe sistema atual). O estoque online será a fonte oficial após a transição.
 - Aplicativos nativos móveis e programa de fidelidade.
-- Revisão humana das traduções automáticas.
 
 ## 3. Atores e permissões
 
@@ -68,14 +67,14 @@ Cada requisito tem identificador permanente. IDs removidos futuramente devem ser
 | RF-016 | Funcionários cadastrados individualmente têm nome, idade, celular, e-mail, CPF, data de contratação e anexo do contrato. Apenas administrador cria, edita e bloqueia contas e acessa esses dados/anexos. | RN-015; UC-07 | TASK-003, TASK-009 |
 | RF-017 | Cada alteração de estoque registra usuário, data/hora, valores anterior/novo e justificativa obrigatória de até 400 caracteres. E-mail de estoque baixo é deduplicado enquanto quantidade permanecer em 7 ou menos; nova notificação após recompor e voltar a cruzar o limite. | RN-016; UC-07 | TASK-007 |
 | RF-018 | Painel do administrador exibe faturamento semanal e mensal por data do pedido e data da confirmação do pagamento, pedidos/cancelamentos e produtos mais/menos vendidos, adicionados ao carrinho e favoritados. Exportação em Excel ou PDF escolhida pelo administrador. | RN-017; UC-08 | TASK-011 |
-| RF-019 | Textos fixos e conteúdo de produtos são traduzidos automaticamente do português para inglês, espanhol e russo para os clientes, sem fluxo de revisão. Preços permanecem em reais (BRL). | RN-018; UC-01 | TASK-004 |
+| RF-019 | O idioma padrão é pt-BR. O visitante pode escolher inglês, espanhol ou russo quando houver conteúdo de produto já traduzido e persistido; essa escolha é opcional. Tradução ausente ou falha usa pt-BR e não bloqueia a navegação. Não há geração automática nem integração faturável autorizada. Preços permanecem em BRL e códigos não são traduzidos. | RN-018; UC-01 | TASK-004 |
 | RF-020 | Cliente pode verificar defeito/dano ao retirar, ou retornar à loja com o produto; equipe registra ocorrência para tratamento direto pelo WhatsApp. | RN-013; UC-05 | TASK-009 |
 
 ## 5. Regras de negócio
 
 - **RN-001 — Navegação pública:** catálogo e filtros são públicos. Para carrinho, favoritos e compra, autenticação é obrigatória.
-- **RN-002 — Visibilidade:** estoque é inteiro e nunca negativo; produto com zero unidades não aparece como disponível/comprável. Alerta de baixo estoque aparece publicamente conforme desenho visual, sem expor dado pessoal.
-- **RN-003 — Elegibilidade:** compra exige CPF brasileiro validável e confirmação de e-mail e celular; público de compra é pessoa com CPF brasileiro. Validação não deve alegar verificar nacionalidade além da validação do CPF.
+- **RN-002 — Visibilidade:** estoque é inteiro e nunca negativo; produto com zero unidades não aparece no catálogo público. Para estoque de 1 ou 2 unidades, exibir publicamente exatamente “Últimas unidades disponíveis.”; acima de 2 não exibir alerta. A view/API pública expõe somente o sinal booleano necessário, nunca a quantidade real.
+- **RN-003 — Elegibilidade:** compra exige CPF brasileiro validável e confirmação de e-mail e celular; público de compra é pessoa com CPF brasileiro. Validação local aprovada: normalizar o valor para 11 dígitos, rejeitar sequências com todos os dígitos iguais e validar os dígitos verificadores; não consultar cadastro externo nem alegar verificar nacionalidade. A regra verifica consistência matemática/formato, não titularidade do CPF.
 - **RN-004 — Isolamento:** cliente vê seus próprios pedidos e perfil; equipe vê os dados de clientes necessários para comunicação; apenas administrador vê dados e anexos dos funcionários.
 - **RN-005 — Reserva concorrente:** reserva de todo item selecionado é transacional/atômica. Se não houver saldo para qualquer linha, pedido/reserva não é criado parcialmente. Carrinho não reserva estoque antes de finalizar.
 - **RN-006 — Cupom:** validade é obrigatória. Limite de uso/restrições são opcionais, cadastrados pelo administrador. Acumulação entre cupons, mínimo de compra, incidência sobre produtos e arredondamento permanecem PENDENTES DE DECISÃO.
@@ -90,7 +89,7 @@ Cada requisito tem identificador permanente. IDs removidos futuramente devem ser
 - **RN-015 — Equipe:** cinco funcionários individuais no lançamento, contas criadas/bloqueadas só pelo administrador; atributos pessoais e contrato protegidos do acesso da equipe.
 - **RN-016 — Auditoria de estoque:** justificativa obrigatória ≤400 caracteres, usuário e carimbo de data/hora imutáveis. Alerta de e-mail dispara ao cruzar para ≤7 unidades, sem repetição contínua; rearmado ao estoque voltar a >7.
 - **RN-017 — Relatórios:** somente administrador acessa. Faturamento é baseado em pagamentos confirmados; apresentar também data do pedido separadamente. Definições de semana, fuso e devoluções/cancelamentos são configuráveis/validadas na implementação.
-- **RN-018 — Tradução:** português é idioma de origem; inglês, espanhol e russo são gerados automaticamente e armazenados em cache com versão do conteúdo/origem. Erros de tradução não impedem compra; exibir português como fallback. Preço é sempre BRL.
+- **RN-018 — Idioma e conteúdo traduzido:** pt-BR é o idioma padrão e conteúdo de origem. O visitante pode selecionar inglês, espanhol ou russo para exibir traduções previamente persistidas quando disponíveis. Não gerar traduções automaticamente nem ativar provider, quota ou cobrança sem decisão futura específica. Tradução ausente ou falha usa pt-BR sem bloquear navegação. Preço é sempre BRL e códigos permanecem inalterados.
 
 ## 6. Requisitos não funcionais
 
@@ -104,9 +103,9 @@ Cada requisito tem identificador permanente. IDs removidos futuramente devem ser
 | RNF-006 | Dados pessoais e anexos têm acesso por função; anexos privados; exportações limitadas a administrador e auditadas. Política de retenção/exclusão e prazos legais serão aprovados pela loja. |
 | RNF-007 | Interface responsiva, teclado acessível, foco visível, contraste legível sobre fundo escuro, textos alternativos e conformidade WCAG 2.2 AA como meta de projeto. |
 | RNF-008 | Horário e prazos calculados no fuso da loja `America/Sao_Paulo`; feriados e exceções editáveis. Todos os eventos armazenados com timestamp UTC e apresentados no fuso local. |
-| RNF-009 | Falha de e-mail/SMS/Google Translation é monitorada, retentada de forma idempotente e não duplica pedidos, reservas, pagamento ou mudança de estoque. |
+| RNF-009 | Falhas de e-mail/SMS são monitoradas, retentadas de forma idempotente e não duplicam pedidos, reservas, pagamento ou mudança de estoque. Falha ao consultar conteúdo traduzido usa pt-BR conforme RN-018. |
 | RNF-010 | Operações críticas (reserva, expiração, baixa/retorno de estoque, confirmação de pagamento, cancelamento) são idempotentes, transacionais e auditáveis. |
-| RNF-011 | A aplicação deverá obrigatoriamente executar em containers. Os componentes executáveis do produto (web/API e workers) serão empacotados como imagens compatíveis com OCI e deverão rodar em Docker ou runtime de containers equivalente, localmente e nos ambientes de implantação. Serviços gerenciados externos, como PostgreSQL gerenciado, não precisam ser containerizados. |
+| RNF-011 | A aplicação deverá obrigatoriamente executar em containers. Os componentes executáveis do produto (web/API e workers) serão empacotados como imagens compatíveis com OCI e deverão rodar em Docker ou runtime de containers equivalente, localmente e nos ambientes de implantação. Serviços gerenciados externos do Supabase não precisam ser containerizados. |
 
 ## 7. Casos de uso
 
@@ -136,17 +135,17 @@ Relacionamentos: cliente 1:N pedidos/carrinhos/favoritos; pedido 1:N linhas e re
 
 ## 9. Interfaces e integrações
 
-- **Google Cloud Translation API**: tradução dinâmica/cache de textos fixos e conteúdo português de produto; segredo somente no backend; uso medido e com limite de gasto.
+- **Traduções do catálogo**: conteúdo já traduzido pode ser persistido por idioma e versão da origem; provider automático, quota e cobrança estão desativados e dependem de decisão futura específica.
 - **WhatsApp**: abrir conversa com número da loja e identificador/resumo mínimo do pedido. Sem WhatsApp Business API no escopo; conversas, negociação, pagamento e reembolso são externos.
 - **E-mail transacional**: verificação, recuperação, situação/pronto, lembretes, perecíveis e alertas internos. Provedor e domínio de envio serão selecionados antes da implantação.
-- **SMS**: verificação do celular e OTP administrativo; fornecedor, custos e política antifraude a selecionar.
+- **Autenticação e dados**: Supabase Auth e Supabase Database são a plataforma aprovada. Supabase Database é o único banco de dados da aplicação e a única camada permitida para qualquer leitura ou gravação persistente; não se deve conectar a aplicação diretamente a outro banco, provedor ou driver. Auth atende confirmação por e-mail e celular, recuperação por e-mail e MFA administrativo por SMS; Database é a fonte oficial para perfis e persistência. SMS exige configurar um provedor no projeto Supabase hospedado.
 - **PDF/Excel**: geração de exportações no servidor respeitando autorização de administrador.
 
 ## 10. Arquitetura recomendada e decisões
 
-Recomendação preliminar para produção: aplicação web TypeScript/Next.js em contêiner no **Google Cloud Run**, PostgreSQL gerenciado **Cloud SQL** em configuração regional HA, armazenamento privado de imagens/anexos em **Cloud Storage**, CDN para imagens, **Cloud Tasks/Pub/Sub** para temporizadores e notificações, Secret Manager, Cloud Logging/Monitoring/Error Reporting, Cloud Translation API e provedor transacional de SMS/e-mail. Região brasileira a avaliar (latência, preço, disponibilidade de cada serviço). Cloud Run oferece autoscaling configurável; Cloud SQL HA usa zonas redundantes e backups/PITR. Isso é uma arquitetura inicial a confirmar por ADR e orçamento, não promessa de disponibilidade automática. Fontes oficiais consultadas em 2026-09-23: [Cloud Run autoscaling](https://docs.cloud.google.com/run/docs/about-instance-autoscaling), [Cloud Run concurrency](https://docs.cloud.google.com/run/docs/about-concurrency), [Cloud SQL HA](https://docs.cloud.google.com/sql/docs/postgres/high-availability), [Cloud SQL recovery](https://docs.cloud.google.com/sql/docs/postgres/backup-recovery/restore), [Cloud Translation pricing](https://cloud.google.com/translate/pricing).
+Arquitetura aprovada para dados e identidade: **Supabase Auth**, **Supabase Database** e **Supabase Storage**. Supabase Database (PostgreSQL gerenciado pelo Supabase) é o único banco de dados autorizado para todas as funcionalidades; toda persistência deve ocorrer por meio do client Supabase e suas APIs. Não utilizar Firebase Database, conexão PostgreSQL direta, outro banco gerenciado, ORM ou driver de banco alternativo. O ADR-007 é a decisão vigente e substitui as escolhas de provedor registradas nos ADRs anteriores. Hospedagem da aplicação, região, plano de disponibilidade, backups, SMTP e provedor SMS ainda serão definidos antes da produção. O ADR-007 registra a substituição de Firebase, PostgreSQL direto e Cloud Storage. Google Cloud Translation e demais integrações de negócio permanecem separadas quando aplicáveis.
 
-O protótipo/teste deverá usar projeto e credenciais isolados, dados sintéticos, limites de orçamento e serviços gratuitos/emuladores quando possível. O envio real de SMS, domínio, serviço de e-mail, Google Translation e alta disponibilidade de produção podem gerar custos. Vercel Hobby não é recomendação para a loja porque seus termos limitam o uso não comercial; preços/termos foram consultados em [Vercel Hobby](https://vercel.com/docs/plans/hobby). Não armazenar documentos reais ou dados de clientes no ambiente de teste.
+O protótipo/teste deverá usar projeto e credenciais isolados, dados sintéticos, limites de orçamento e serviços gratuitos/emuladores quando possível. O envio real de SMS, domínio, serviço de e-mail, uma eventual futura ativação do Google Translation e alta disponibilidade de produção podem gerar custos. A integração de tradução automática não está autorizada nem ativa. Vercel Hobby não é recomendação para a loja porque seus termos limitam o uso não comercial; preços/termos foram consultados em [Vercel Hobby](https://vercel.com/docs/plans/hobby). Não armazenar documentos reais ou dados de clientes no ambiente de teste.
 
 ## 11. Pendências explícitas
 
@@ -156,8 +155,8 @@ O protótipo/teste deverá usar projeto e credenciais isolados, dados sintético
 4. A política de reembolso fornecida teve formulações conflitantes. O sistema não calcula/processa reembolso; texto legal definitivo e processo são responsabilidade da loja e devem estar visíveis antes do pagamento. Cancelamento operacional/retorno de estoque permanece definido em RN-014.
 5. Permissão para funcionário atualizar estados “pronto para retirada” e “retirado” além do registro da conferência.
 6. Frequência de backup/RPO final, SLO mensal, retenção de dados, retenção de anexos e requisitos legais de privacidade.
-7. Ajuste das categorias de ocasião/tipo e tradução automática de toxicidade/cuidados; conteúdo botânico deve ser fornecido pela loja e não inventado pela tradução.
-8. Texto/configuração do alerta público de última unidade; alerta de equipe no limite 7 será deduplicado conforme RN-016.
+7. Ajuste das categorias de ocasião/tipo e conteúdo botânico de toxicidade/cuidados; conteúdo deve ser fornecido pela loja e não inventado.
+8. Alerta público de última unidade definido em RN-002; alerta de equipe no limite 7 será deduplicado conforme RN-016.
 
 ## 12. Matriz de rastreabilidade resumida
 
@@ -199,22 +198,25 @@ curl --fail http://localhost:3000/
 
 No PowerShell, a verificação equivalente é `Invoke-WebRequest -Uri http://localhost:3000/`. O container é removido ao encerrar porque usa `--rm`. Para parar, use `Ctrl+C` no terminal que o iniciou. Não instale dependências no host para executar a imagem; a construção instala o lockfile dentro do container.
 
-O ambiente local usa imagens Docker, dados sintéticos e configuração de teste; não usa endpoints de produção ou dados pessoais. A página inicial não requer variáveis de banco; migrations e a rota de saúde do PostgreSQL exigem `DATABASE_URL` e `DB_POOL_MAX`. Cada ambiente deverá receber configuração própria; segredos de teste e produção não devem ser versionados ou compartilhados.
+O ambiente local usa Supabase via Docker, dados sintéticos e configuração de teste; não usa endpoints de produção ou dados pessoais. Configure em .env.local (não versione esse arquivo). No PowerShell, mantenha o estado da CLI dentro da pasta local do projeto:
 
-### Persistência PostgreSQL local (TASK-002)
-
-A camada de consultas usa Kysely com PostgreSQL (`pg`). O comando de migration é explícito; a aplicação não altera o banco durante a inicialização. Para um banco de teste descartável, execute PostgreSQL 17.11 localmente em container e forneça `DATABASE_URL` e `DB_POOL_MAX` no ambiente do processo. `.env.example` é apenas uma referência com placeholder; os comandos abaixo definem as variáveis no PowerShell. `tsx` não carrega automaticamente `.env.local`. Nunca coloque credenciais reais em arquivos rastreados.
-
-```powershell
-docker run --rm --detach --name flor-task002-postgres --publish 127.0.0.1:54329:5432 --env POSTGRES_PASSWORD=local-only-change-me --env POSTGRES_DB=flor_test postgres@sha256:eee6c6e1b0894fa4fe0075eb054af9fd1cf39a35321c2d4110626cfe506411fb
-$env:DATABASE_URL = 'postgresql://postgres:local-only-change-me@127.0.0.1:54329/flor_test'
-$env:DB_POOL_MAX = '2'
-npm run db:migrate
-npm run test:db
-npm run db:rollback
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<chave-anon-local-informada-pelo-supabase-cli>
+SUPABASE_SERVICE_ROLE_KEY=<chave-service-role-local-informada-pelo-supabase-cli>
 ```
 
-O comando de rollback remove apenas o schema vazio `app` no banco apontado, sem `CASCADE`; execute-o somente no banco descartável. Encerre o container com `docker stop flor-task002-postgres`. O pool é singleton por processo e sua capacidade de produção ainda precisa ser dimensionada em tarefa operacional posterior. Consulte ADR-006 para a decisão e os limites.
+SUPABASE_SERVICE_ROLE_KEY é exclusivamente de servidor e nunca deve usar o prefixo NEXT_PUBLIC_. Defina $env:SUPABASE_HOME = "$PWD\.supabase-home" e $env:npm_config_cache = "$PWD\.npm-cache"; use npm run supabase:start e npm run supabase:status para iniciar a stack local e consultar os valores locais. E-mails locais são capturados pelo Mailpit; a stack usa o OTP sintético documentado e não envia SMS real.
+
+### Database local e migrations
+
+Supabase Database é acessado pelo client Supabase; a aplicação não abre conexão direta. Migrations SQL ficam em supabase/migrations e são aplicadas à stack local com npm run db:reset. Configure SUPABASE_HOME e npm_config_cache no PowerShell conforme acima. Não conecte a CLI a projeto remoto sem autorização explícita. Consulte [ADR-007](docs/adr/ADR-007-supabase-como-plataforma-de-dados.md).
+
+### Autenticação e dados de identidade
+
+O cadastro usa Supabase Auth. A conta só é concluída após confirmação de e-mail e celular; nome, CPF validado localmente, e-mail e telefone E.164 ficam no perfil Supabase, enquanto a senha permanece no Auth. CPF não pode ser alterado pelo cliente. Roles ficam em app_metadata, conferidas no servidor; contratos ficam em bucket privado do Supabase Storage. A interface de autenticação está em /auth e o perfil em /profile.
+
+Recuperação de senha usa resetPasswordForEmail. MFA do administrador usa challenge/verify por telefone e as ações sensíveis verificam AAL2 e a janela de inatividade no servidor. Em produção, configure SMTP e provedor SMS no Supabase; não versione chaves reais. A configuração e a matriz de acesso estão em [docs/security/TASK-003-autenticacao-e-autorizacao.md](docs/security/TASK-003-autenticacao-e-autorizacao.md).
 
 ### CI
 

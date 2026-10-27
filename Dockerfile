@@ -23,6 +23,7 @@ RUN groupadd --system --gid 1001 app \
 
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
+COPY --from=build --chown=app:app /app/src/workers/reservation-expiration.mjs ./src/workers/reservation-expiration.mjs
 
 USER app
 EXPOSE 3000

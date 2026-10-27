@@ -1,15 +1,16 @@
 flowchart LR
-  Visitante[Visitante] --> Web[Site Flor da Meia-Noite]
-  Cliente[Cliente cadastrado] --> Web
-  Func[Funcionário] --> Admin[Administração do site]
-  Adm[Administrador] --> Admin
+  Visitor[Visitante] --> Web[Site Flor da Meia-Noite]
+  Customer[Cliente cadastrado] --> Web
+  Employee[Funcionário] --> Admin[Administração do site]
+  Owner[Administrador] --> Admin
   Web --> API[API / regras de negócio]
   Admin --> API
-  API --> DB[(PostgreSQL: clientes, catálogo, pedidos, estoque)]
-  API --> Store[(Armazenamento de imagens e contratos)]
+  API --> Auth[Supabase Auth]
+  API --> DB[(Supabase Database)]
+  API --> Storage[Supabase Storage privado]
   API --> Queue[Fila de tarefas e notificações]
   Queue --> Email[Provedor de e-mail]
   Queue --> SMS[Provedor SMS]
   API --> Translate[Google Cloud Translation]
   Web --> Whats[WhatsApp da loja: negociação e pagamento]
-  Adm --> Whats
+  Owner --> Whats

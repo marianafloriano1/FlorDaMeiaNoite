@@ -1,6 +1,6 @@
 # ADR-006 — Camada de consultas e migrations PostgreSQL
 
-- **Status:** ACEITO — decisão técnica da TASK-002
+- **Status:** SUBSTITUÍDO pelo ADR-007 em 2026-10-23 — Kysely/pg não são mais a camada da aplicação.
 - **Data:** 2026-10-22
 - **Rastreabilidade:** TASK-002; RNF-001, RNF-010; ADR-002
 
