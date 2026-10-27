@@ -117,7 +117,7 @@ jobs:
           set -euo pipefail
           log="$RUNNER_TEMP/task005-test.log"
           set +e
-          npm run test:task005 2>&1 | tee "$log"
+          node --import=tsx --test --test-reporter=tap tests/task005/*.test.ts 2>&1 | tee "$log"
           result=${PIPESTATUS[0]}
           set -e
           test "$result" -eq 0
