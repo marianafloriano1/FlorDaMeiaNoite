@@ -91,13 +91,16 @@ export async function requireSession(): Promise<VerifiedIdentity | null> {
 export async function registerAdminSession(identity: VerifiedIdentity): Promise<void> {
   if (identity.role !== "admin") return;
   const db = getSupabaseAdminClient();
-  const { error } = await db.from("admin_auth_sessions").upsert({
-    session_id: identity.sessionId,
-    user_id: identity.uid,
-    mfa_verified_at: identity.recentMfaAt?.toISOString() ?? null,
-    last_activity_at: new Date().toISOString(),
-    revoked_at: null,
-  }, getAdminSessionInsertOptions());
+  const { error } = await db.from("admin_auth_sessions").upsert(
+    {
+      session_id: identity.sessionId,
+      user_id: identity.uid,
+      mfa_verified_at: identity.recentMfaAt?.toISOString() ?? null,
+      last_activity_at: new Date().toISOString(),
+      revoked_at: null,
+    },
+    getAdminSessionInsertOptions(),
+  );
   if (error) throw new Error("ADMIN_SESSION_REGISTRATION_FAILED");
 }
 

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { normalizeAndValidateCpf } from "@/lib/auth/cpf";
 import { requireSameOrigin } from "@/lib/auth/http";
+import { normalizePhoneNumber } from "@/lib/auth/phone";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { normalizePhoneNumber } from "@/lib/auth/phone";
 
 export async function POST(request: Request) {
   if (!(await requireSameOrigin()))
@@ -17,12 +17,7 @@ export async function POST(request: Request) {
   const fullName = body?.fullName?.trim();
   const cpf = typeof body?.cpf === "string" ? normalizeAndValidateCpf(body.cpf) : null;
   const phoneNumber = normalizePhoneNumber(body?.phoneNumber);
-  if (
-    !fullName ||
-    fullName.length > 200 ||
-    !cpf ||
-    !phoneNumber
-  ) {
+  if (!fullName || fullName.length > 200 || !cpf || !phoneNumber) {
     return NextResponse.json({ error: "invalid_profile" }, { status: 400 });
   }
 

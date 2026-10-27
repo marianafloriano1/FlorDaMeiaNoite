@@ -22,7 +22,10 @@ test("rejects an old aal2 token without a recent MFA proof", () => {
 test("accepts a recent verified mfa/phone timestamp from aal2 claims", () => {
   const timestamp = now / 1000 - 30;
   assert.equal(
-    getRecentMfaTimestamp({ aal: "aal2", amr: [{ method: "mfa/phone", timestamp }] }, now)?.getTime(),
+    getRecentMfaTimestamp(
+      { aal: "aal2", amr: [{ method: "mfa/phone", timestamp }] },
+      now,
+    )?.getTime(),
     timestamp * 1000,
   );
 });
