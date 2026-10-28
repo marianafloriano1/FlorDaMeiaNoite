@@ -53,3 +53,9 @@
 - TASK-005 permanece IN_REVIEW; Etapa 005 não iniciada. GATE-004 não aprova nem habilita etapas seguintes.
 
 
+
+## Adendo de revalidação — GATE-004 aprovado (2026-10-27)
+
+A evidência mais recente informada pela usuária confirma o job de integração da CI como PASS: `test:task005` executou 10/10 testes, com 0 SKIP, em Supabase local isolado após `supabase start` aplicar as quatro migrations. Os cenários cobriram concorrência na última unidade, idempotência, rollback atômico, expiração e RLS. Lint, typecheck e Biome também foram informados como PASS.
+
+**Estado vigente da Etapa 004: APROVADA. GATE-004: APROVADO.** Este adendo atualiza o estado bloqueado registrado na execução de 2026-10-25; aquele registro permanece como histórico, não como estado atual. A evidência é reportada pela usuária e não foi repetida nesta atualização documental.

@@ -128,12 +128,12 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-005 — Carrinho, favoritos e reserva concorrente
 
-- **Status:** IN_REVIEW | **Branch:** `task/TASK-005-carrinho-favoritos-reservas` | **DEPENDS_ON:** TASK-002, TASK-003, TASK-004 | **Rastreabilidade:** RF-005/006/007/008; RN-005/007; RNF-001/010; UC-03; ADR-002.
+- **Status:** DONE | **Branch:** `task/TASK-005-carrinho-favoritos-reservas` | **DEPENDS_ON:** TASK-002, TASK-003, TASK-004 | **Rastreabilidade:** RF-005/006/007/008; RN-005/007; RNF-001/010; UC-03; ADR-002.
 - **Objetivo:** persistir carrinho/favoritos e reservar unidades escolhidas por três horas sem saldo negativo.
-- **Allowed Changes:** Cart/CartItem/Favorite/Reservation/InventoryLedger; transação de checkout/reserva; job de expiração; integração mínima compartilhada em src/app/catalog/[slug]/page.tsx para ações de carrinho/favoritos. Classificação: ARQUIVO COMPARTILHADO — TASK-004/TASK-005.
+- **Allowed Changes:** Cart/CartItem/Favorite/Reservation/InventoryLedger; transação de reserva; job de expiração; integração mínima compartilhada em src/app/catalog/[slug]/page.tsx para ações de carrinho/favoritos. Classificação: ARQUIVO COMPARTILHADO — TASK-004/TASK-005.
 - **Incidental:** mecanismo idempotente de retry e painel técnico de reservas necessário ao suporte.
-- **Forbidden:** checkout de visitante; reserva antes do botão final; reserva parcial; liberar item duas vezes; cancelar pedido pago por job; manipular saldo por cache.
-- **Aceite:** cliente seleciona subconjunto; reserva começa no clique final e dura três horas mesmo durante conferência; saldo concorrente correto; expiração cancela e libera exatamente uma vez; visitante não usa carrinho/favorito; catálogo esconde zero.
+- **Forbidden:** checkout de visitante; reserva antes da ação explícita; reserva parcial; liberar item duas vezes; criar pedido, iniciar checkout ou processar pagamento nesta TASK; manipular saldo por cache.
+- **Aceite:** cliente seleciona subconjunto e cria reserva temporária de três horas; no máximo uma reserva ativa por cliente/carrinho; saldo concorrente correto; expiração marca expired e libera disponibilidade exatamente uma vez; visitante não usa carrinho/favorito; catálogo esconde zero; TASK-005 não cria pedido/checkout.
 - **Validação:** teste concorrente em último item, expiração repetida, rollback, relógio/fuso.
 - **DoD:** transação e idempotência demonstradas com evidência e ledger auditável.
 
@@ -146,6 +146,17 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - **Etapa 003 (2026-10-25):** GATE-003 CONCLUÍDO; plano aprovado em `docs/reports/TASK-005-etapa-003-planejamento.md`. Expiração: estado `active` com `expires_at` UTC de 3h; worker periódico em processo OCI existente expira e libera disponibilidade transacionalmente, com repetição idempotente. Fronteira definida: TASK-005 cria/expira/cancela reserva temporária; não cria pedido, checkout ou pagamento; TASK-006 poderá consumir reserva válida. Nenhum código, teste ou migration foi alterado. Validação integrada migrations 003+004 segue PENDENTE por Docker e não bloqueia o planejamento. TASK-005 READY; Etapa 004 habilitada para execução futura, não iniciada.
 
 - **Etapa 004 (2026-10-25):** implementação TASK-005 registrada em `docs/reports/TASK-005-etapa-004-implementacao.md`. 4 testes unitários/worker PASS, integração Supabase 1 SKIP/NOT RUN; TypeScript e Biome direcionado PASS; lint global FAIL em 5 diagnósticos de arquivos preexistentes fora do escopo TASK-005; build Next PASS em cópia temporária com Webpack, sem alterar `.next` original. Docker Engine permanece inacessível; migration, integração concorrente/rollback/expiração/RLS e OCI NOT RUN. GATE-004 BLOQUEADO; TASK-005 IN_REVIEW; Etapa 005 não iniciada.
+
+- **Revalidação da Etapa 004 (2026-10-27):** conforme evidência informada pela usuária, job integrado da CI PASS; `test:task005` 10/10 PASS, 0 SKIP, em Supabase isolado com quatro migrations; concorrência da última unidade, idempotência, rollback, expiração e RLS cobertos. Lint, typecheck e Biome PASS. **GATE-004: APROVADO.** O bloqueio de 2026-10-25 é histórico e foi supersedido por esta revalidação. A evidência não foi repetida nesta atualização documental.
+- **Etapa 005 — Revisão (2026-10-27):** relatório `docs/reports/TASK-005-etapa-005-revisao.md`; GATE-005 BLOQUEADO por (P2) ledger com `ON DELETE CASCADE` contra imutabilidade do ADR-002, README RF-007/008 não reconciliado com decisão aprovada TASK-005/TASK-006, e ausência de evidência de execução do worker em processo/container. GATE-004 APROVADO com base na revalidação informada pela usuária (CI 10/10, 0 SKIP; quatro migrations; lint/typecheck/Biome PASS). Nenhum código/migration alterado; TASK-003/TASK-004 preservadas; TASK-006 não iniciada. GATES acumulados: 4 concluídos, 2 pendentes, 1 bloqueado. Etapa 006 não habilitada.
+- **Retomada da Etapa 005 (2026-10-27):** conforme autorização da usuária, README RF-006/007/008 e RN-005/007 reconciliados com a fronteira TASK-005 (reserva temporária) / TASK-006 (pedido/checkout); migration aditiva 202610270001_task005_inventory_ledger_restrict_delete.sql substitui ON DELETE CASCADE do ledger por ON DELETE RESTRICT. Migration 202610270001_task005_inventory_ledger_restrict_delete.sql VALIDADA conforme evidência reportada pela usuária: migration up --local concluída, test:task005 10/10 PASS, 0 SKIP, e CI verde. Execução do worker reportada pela usuária: processo vivo após 12 s, sem logs de falha; Ctrl+C/SIGINT retornou ao prompt sem segunda interrupção nem erros, com LASTEXITCODE 0. GATE-005 APROVADO; contagem atual: 5 concluídos, 2 pendentes (006–007), 0 bloqueados. Etapa 006 habilitada para execução futura, mas não iniciada. TASK-006 não iniciada; nenhum Docker/container foi iniciado pelo Codex. TASK-003/TASK-004 e TASK-006 não alteradas/iniciada.
+
+### Etapa 006 — testes manuais TASK-005 (2026-10-28)
+- GATE-006 APROVADO; T001–T011 PASS conforme evidências reportadas pela usuária, consolidadas em docs/testing/TASK-005-etapa-006-testes-manuais.md e docs/reports/TASK-005-etapa-006-testes-manuais.md. Não reexecutadas pelo Codex.
+
+### Etapa 007 — conclusão TASK-005 (2026-10-28)
+- GATE-007 APROVADO; relatório em docs/reports/TASK-005-etapa-007-conclusao.md. GATE-001–007 registrados como concluídos.
+- TASK-005 marcada DONE por solicitação explícita da usuária em 2026-10-28 após aprovação dos GATE-001–007. TASK-006 não iniciada; nenhuma TASK posterior iniciada automaticamente.
 ## TASK-006 — Pedido e transição para WhatsApp
 
 - **Status:** BLOCKED | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-007/009/010; RN-007/008/009; RNF-010; UC-03/04; ADR-003.
