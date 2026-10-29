@@ -36,14 +36,15 @@
 
 `app_metadata.role` é definido somente pelo servidor e nunca aceito do corpo da requisição. O backend valida a sessão Supabase em cada rota e confere o estado atual do funcionário. MFA telefone deve produzir AAL2; sessões administrativas registram `session_id`, horário de MFA e atividade. Depois de mais de uma hora sem atividade, ações sensíveis exigem novo challenge/verify.
 
-### Estoque, reserva e pedidos
+### Reserva e pedido — responsabilidades separadas
 
-1. Backend recalcula preço/cupom e verifica conta confirmada.
-2. Uma transação Supabase Database cria pedido, reserva estoque até três horas e impede saldo negativo.
-3. Falha em qualquer linha causa rollback integral; não há reserva parcial.
-4. Um job idempotente expira o pedido ainda aguardando pagamento e libera estoque uma vez.
-5. O cliente segue para o WhatsApp; falha ao abrir WhatsApp não desfaz o pedido/reserva.
-
+1. A TASK-005 mantém carrinho/favoritos e cria a reserva temporária após seleção explícita. A reserva é atômica, dura até três horas e é a única autoridade de disponibilidade e baixa temporária.
+2. A TASK-006 aceita somente uma reserva válida e não expirada para criar/vincular Order e OrderItem. A criação do pedido não cria nova reserva nem faz nova baixa. Falha na associação não pode deixar pedido parcial nem ampliar a reserva.
+3. A expiração da reserva e a liberação única do estoque pertencem ao worker/RPC da TASK-005. A TASK-006 pode reconciliar o estado do pedido associado, mas não libera saldo nem altera o ledger da reserva.
+4. Pagamento é negociado fora do site. O admin/gerente registra manualmente a confirmação; o site não coleta cartão, processa pagamento ou calcula reembolso.
+5. Após confirmação integral do pagamento, registrar preparation_window_start = payment_confirmed_at + 1 hora e preparation_window_end = payment_confirmed_at + 2 horas. Campos timestamptz em UTC e exibidos em America/Sao_Paulo.
+6. O cliente abre link wa.me para WHATSAPP_STORE_NUMBER. O rascunho contém referência opaca, resumo de itens, total autoritativo em BRL e link seguro de acompanhamento; a pessoa envia manualmente. Não há envio automatizado nem WhatsApp Business API.
+7. A autorização usa os papéis server-controlled existentes: employee (operador) e admin (gerente). Apenas admin/gerente confirma pagamento e cancela pedido.
 ## Segurança e privacidade
 
 - Supabase service role key fica exclusivamente no servidor; nunca usar prefixo `NEXT_PUBLIC_`.

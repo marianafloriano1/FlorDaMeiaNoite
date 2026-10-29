@@ -18,6 +18,7 @@
     "test:catalog": "node --experimental-test-module-mocks --import=tsx --test tests/catalog/*.test.ts tests/translation/*.test.ts",
     "test:task007": "node --conditions=react-server --experimental-test-module-mocks --import=tsx --import=./tests/task007/next-test-setup.mjs --test tests/task007/*.test.ts",
     "test:task005": "node --import=tsx --test tests/task005/*.test.ts",
+    "test:task006": "node --import=tsx --test tests/task006/*.test.ts",
     "worker:reservation-expiration": "node src/workers/reservation-expiration.mjs",
     "worker:catalog-stock-alerts": "node src/workers/catalog-stock-alerts.mjs",
     "test:auth:supabase-mfa": "node --import=tsx --test tests/auth/task003.supabase-mfa.test.ts",
