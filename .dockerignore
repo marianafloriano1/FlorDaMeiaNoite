@@ -5,3 +5,4 @@ coverage
 out
 .env*
 npm-debug.log*
+.npm-cache/

@@ -1,12 +1,12 @@
-import { sql } from "kysely";
-import { getDatabase } from "@/lib/db/client";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
   try {
-    await sql`select 1`.execute(getDatabase());
+    const { error } = await getSupabaseAdminClient().rpc("health_check");
+    if (error) throw error;
     return Response.json({ status: "ok" });
   } catch {
     return Response.json({ status: "unavailable" }, { status: 503 });

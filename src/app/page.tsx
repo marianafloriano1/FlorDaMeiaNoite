@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="page-shell">
@@ -5,11 +7,16 @@ export default function Home() {
         <p className="eyebrow">FLOR DA MEIA-NOITE</p>
         <h1 id="page-title">Um espaço para florescer.</h1>
         <p className="description">
-          A base do site está pronta. As funcionalidades da floricultura serão adicionadas nas
-          próximas etapas do projeto.
+          Explore flores, plantas e objetos de jardinagem no catálogo da loja.
         </p>
         <p className="environment" role="status">
-          Ambiente inicial — sem catálogo ou pedidos ativos.
+          Catálogo público. Pedidos e pagamentos não são realizados nesta etapa.
+        </p>
+        <p className="description">
+          <Link href="/catalog">Abrir catálogo</Link>
+        </p>
+        <p className="description">
+          <Link href="/auth">Entrar ou criar uma conta</Link>
         </p>
       </section>
     </main>
