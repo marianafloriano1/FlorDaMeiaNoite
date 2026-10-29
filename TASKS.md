@@ -137,6 +137,8 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - **Recontextualização posterior:** no checkout integrado, TASK-004 foi concluída e aprovada (GATE-001–007); a integração mínima de UI TASK-004/TASK-005 foi autorizada e a Etapa 003 foi aprovada. Os registros bloqueados anteriores são históricos e foram superados por essas decisões.
 - **Etapa 004 — implementação/validação (2026-10-25/26):** implementação em revisão. `npm run test:task005`: 4 PASS e suíte Supabase SKIP/NOT RUN; TypeScript e Biome direcionado PASS; build Next PASS em cópia temporária (Webpack, variáveis sintéticas); lint global FAIL com cinco diagnósticos fora do escopo. Migration `202610250003_task005_cart_favorites_reservations.sql`, concorrência, rollback, expiração/RLS e OCI permanecem NOT RUN: Docker Engine inacessível/sem resposta e não foi possível identificar com segurança uma stack integrada. GATE-004 = BLOQUEADO; Etapa 005 = BLOQUEADA. Evidência: `docs/reports/TASK-005-etapa-004-validacao-2026-10-26.md`.
 
+- **Revalidação (2026-10-26):** Docker Client/Server 29.9.2 respondeu inicialmente. Stack integrada `task003-004-integration-20261025` identificada; seu histórico registra migrations 001–003, mas objetos TASK-005 já existem sem versionamento 004, então não foi alterada. Stack temporária exclusiva iniciou e travou em “Starting database”; estado final não confirmado após daemon deixar de responder. 4 testes unitários, TypeScript e Biome direcionado PASS; build em cópia nova compilou e gerou 16/16 páginas, com aviso de tracing externo; integração de banco, migration e OCI continuam pendentes. Detalhes e passos de resolução: `docs/reports/TASK-005-etapa-004-revalidacao-2026-10-26.md`.
+
 ## TASK-006 — Pedido e transição para WhatsApp
 
 - **Status:** BLOCKED | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-007/009/010; RN-007/008/009; RNF-010; UC-03/04; ADR-003.
@@ -263,4 +265,3 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - TASK-004: DONE (GATE-001–007 concluídos; T001–T011 PASS; migration de alerta de estoque validada em Supabase isolado; RNF-002 registrado com medições 41 ms, 43 ms e 247 ms).
 - TASK-005: IN_REVIEW; GATE-004 BLOQUEADO por migration/integration/OCI pendentes, conforme relatório vinculado acima. Etapa 005 não iniciada.
 - TASK-006 a TASK-014: BLOCKED pelas dependências ainda não concluídas; nenhuma foi iniciada nesta atualização.
-

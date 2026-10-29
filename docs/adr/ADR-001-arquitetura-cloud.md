@@ -5,6 +5,8 @@
 - **Decisores:** solicitante / responsável pela Flor da Meia-Noite
 - **Rastreabilidade:** RNF-001..004, RNF-009; RF-019; TASK-001, TASK-002, TASK-013, TASK-014.
 
+> **Atualização 2026-10-23:** a seleção de banco, autenticação e armazenamento de arquivos desta proposta foi substituída por Supabase conforme ADR-007. A hospedagem do container e integrações não abrangidas permanecem sujeitas a decisão/planejamento operacional.
+
 ## Contexto
 
 O sistema é novo, deve operar aproximadamente 30 pedidos/dia e suportar picos estimados em 1.000 usuários simultâneos. O solicitante aceita serviços pagos em produção e prioriza disponibilidade confiável. Google Cloud Translation é requisito, enquanto SMS/e-mail e domínio serão pagos quando necessário. Teste inicial precisa ser gratuito. Foi acrescentado o requisito RNF-011: a aplicação obrigatoriamente deve rodar em containers (Docker ou runtime equivalente).
