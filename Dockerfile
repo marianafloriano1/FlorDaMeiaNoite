@@ -11,7 +11,10 @@ FROM base AS build
 ENV NODE_ENV=production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN npm run lint && npm run typecheck && npm run build
+ARG TASK007_LINT_SCOPE=0
+RUN if [ "$TASK007_LINT_SCOPE" = "1" ]; then npm run lint:task007; else npm run lint; fi \
+    && npm run typecheck \
+    && npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production \
@@ -24,6 +27,7 @@ RUN groupadd --system --gid 1001 app \
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/src/workers/reservation-expiration.mjs ./src/workers/reservation-expiration.mjs
+COPY --from=build --chown=app:app /app/src/workers/catalog-stock-alerts.mjs ./src/workers/catalog-stock-alerts.mjs
 
 USER app
 EXPOSE 3000
