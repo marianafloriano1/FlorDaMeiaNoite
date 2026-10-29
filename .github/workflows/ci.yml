@@ -33,7 +33,12 @@ jobs:
       - name: Instalar dependências do lockfile
         run: npm ci --no-audit --no-fund
 
-      - name: Lint
+      - name: Lint direcionado TASK-007
+        if: startsWith(github.ref, 'refs/heads/task/TASK-007') || startsWith(github.head_ref, 'task/TASK-007')
+        run: npm run lint:task007
+
+      - name: Lint global
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') }}
         run: npm run lint
 
       - name: Verificar tipos
@@ -42,7 +47,12 @@ jobs:
       - name: Build da aplicação
         run: npm run build
 
+      - name: Construir imagem do container TASK-007
+        if: startsWith(github.ref, 'refs/heads/task/TASK-007') || startsWith(github.head_ref, 'task/TASK-007')
+        run: docker build --pull --build-arg TASK007_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
+
       - name: Construir imagem do container
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') }}
         run: docker build --pull --tag flor-da-meia-noite:${{ github.sha }} .
 
   task005-integration:
