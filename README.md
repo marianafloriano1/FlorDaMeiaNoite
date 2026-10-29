@@ -2,7 +2,7 @@
 
 ## Estado deste documento
 
-Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório contém a base técnica inicial e especifica as funcionalidades futuras; catálogo, contas, pedidos e demais fluxos de negócio ainda não estão implementados. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
+Planejamento aprovado pelo solicitante em 2026-09-23. Este repositório reúne os requisitos e as implementações entregues conforme o estado registrado em TASKS.md: catálogo e contas estão implementados, e o fluxo de pedidos/checkout da TASK-006 está em implementação. Endereço da loja, domínio, arquivos finais da marca, política jurídica de privacidade/cancelamento e alguns parâmetros operacionais ainda serão fornecidos pela loja antes da publicação.
 
 ## 1. Visão do produto
 
@@ -38,7 +38,7 @@ Catálogo e páginas de produto; busca e filtros; conta e verificação de e-mai
 |---|---|
 | Visitante | Ver catálogo, pesquisar e filtrar produtos e ver alerta de estoque baixo; não usa carrinho nem favoritos. |
 | Cliente autenticado | Gerenciar perfil, comprar, usar carrinho e favoritos, aplicar cupom, acompanhar próprios pedidos, receber notificações e solicitar cancelamento por WhatsApp conforme política divulgada. |
-| Funcionário (cinco contas individuais) | Cadastrar/editar produtos; manter estoque com justificativa obrigatória de até 400 caracteres; conferir pedido e registrar resultado; consultar dados de clientes necessários à comunicação. Permissão para atualizar outros estados do pedido além de registrar conferência permanece PENDENTE. Sem acesso a dados de outros funcionários, relatórios, gestão de contas, cupons ou confirmação de pagamento. |
+| Funcionário (cinco contas individuais; role `employee` = operador) | Cadastrar/editar produtos; manter estoque com justificativa obrigatória de até 400 caracteres; conferir pedido e registrar resultado; avançar somente estados operacionais autorizados do pedido; consultar dados de clientes necessários à comunicação. Sem acesso a dados de outros funcionários, relatórios, gestão de contas, cupons, confirmação de pagamento ou cancelamento. |
 | Administrador principal | Todas as ações administrativas; aprovar conferência e confirmar pagamentos; criar/editar/desativar cupons; gerenciar contas de funcionários; cancelar pedidos e decidir itens que retornam ao estoque; relatórios/exportações; configurações da loja. Exige código de segundo fator para ações sensíveis, uma vez por sessão; após 1 hora sem atividade, exige novo código para renovar a sessão. |
 
 Dados completos dos clientes ficam visíveis a funcionários e administrador porque são usados na confirmação pelo WhatsApp. Dados cadastrais e contrato dos funcionários são visíveis apenas ao administrador. A solicitação de direitos sobre dados pessoais é atendida pelo administrador. A loja publicará sua política de privacidade e termos.
@@ -57,8 +57,8 @@ Cada requisito tem identificador permanente. IDs removidos futuramente devem ser
 | RF-006 | Cliente autenticado adiciona itens ao carrinho e pode selecionar um subconjunto para uma reserva temporária. A seleção/reserva não envia pedido nem aplica cupom; pedido/checkout e cupons pertencem aos fluxos das TASKs responsáveis. | RN-005, RN-006; UC-03 | TASK-005, TASK-006, TASK-008 |
 | RF-007 | A TASK-005 cria atomicamente uma reserva temporária do estoque selecionado, com validade de 3 horas e no máximo uma reserva ativa por cliente/carrinho. A TASK-005 não cria pedido, não inicia checkout nem direciona ao WhatsApp; a TASK-006 poderá consumir uma reserva válida ao iniciar o pedido/checkout. | RN-005, RN-007; UC-03 | TASK-005, TASK-006 |
 | RF-008 | Se uma reserva não for consumida, concluída ou cancelada antes de expires_at (3 horas após sua criação), passa para expired e libera o estoque uma única vez por mecanismo periódico idempotente. A política de expiração/cancelamento de pedido por falta de pagamento pertence à TASK-006. | RN-007; UC-03, UC-05 | TASK-005, TASK-006 |
-| RF-009 | Equipe registra conferência dos itens; administrador aprova pedido e registra confirmação manual do pagamento após conferi-lo no WhatsApp. Site oferece pagamento apenas via WhatsApp (formas informadas: Pix, transferência, cartão de crédito e débito). | RN-008; UC-04 | TASK-006, TASK-009 |
-| RF-010 | Após confirmação do pagamento integral pelo administrador, pedido entra em preparo, iniciado entre 1 e 2 horas depois; cliente acompanha estados: Aguardando pagamento, Em preparo, Pronto para retirada, Retirado com sucesso, Cancelado. Papel autorizado a atualizar cada estado além da conferência fica pendente. | RN-008, RN-009; UC-04, UC-05 | TASK-006, TASK-009 |
+| RF-009 | O cliente abre conversa WhatsApp com mensagem pré-preenchida contendo referência opaca do pedido, resumo de itens, total autoritativo em BRL e link seguro de acompanhamento; a pessoa envia manualmente. Employee/operador registra conferência e atualiza estados permitidos; admin/gerente aprova e registra pagamento manual. | RN-008; UC-04 | TASK-006, TASK-009 |
+| RF-010 | Estados do pedido: Aguardando pagamento, Em preparo, Pronto para retirada, Retirado com sucesso e Cancelado. Após confirmação integral do pagamento pelo administrador, registrar preparation_window_start = payment_confirmed_at + 1 hora e preparation_window_end = payment_confirmed_at + 2 horas; ambos timestamptz UTC, apresentados no fuso da loja. | RN-008, RN-009; UC-04, UC-05 | TASK-006, TASK-009 |
 | RF-011 | Administrador define data e horário de retirada após combinar com cliente no WhatsApp; cliente vê previsão no site. Loja configura endereço e horários: seg-sex 08:00–18:30; sáb-dom 09:00–13:00; feriados e horários especiais configuráveis. Cliente informa quando precisa do produto. | RN-010; UC-04 | TASK-009 |
 | RF-012 | Sistema envia confirmação/lembretes por e-mail: um dia e uma hora antes da retirada; e-mail de pronto; e, para item perecível não retirado, um alerta diário durante a janela de 3 dias úteis. Aviso de estoque baixo fica visível no site a todos; equipe recebe e-mail ao chegar a 7 unidades. | RN-011, RN-012; UC-06 | TASK-010 |
 | RF-013 | Cliente pode pedir cancelamento conforme política divulgada, pelo WhatsApp; ação operacional de cancelar pedido no sistema é exclusiva do administrador. Sistema não calcula nem processa reembolso. | RN-013; UC-05 | TASK-009 |
@@ -79,8 +79,8 @@ Cada requisito tem identificador permanente. IDs removidos futuramente devem ser
 - **RN-005 — Reserva concorrente:** reserva de todo item selecionado é transacional/atômica. Se não houver saldo para qualquer linha, a reserva não é criada parcialmente. O carrinho não reserva estoque antes da ação explícita de reserva; criar pedido/checkout é responsabilidade da TASK-006.
 - **RN-006 — Cupom:** validade é obrigatória. Limite de uso/restrições são opcionais, cadastrados pelo administrador. Acumulação entre cupons, mínimo de compra, incidência sobre produtos e arredondamento permanecem PENDENTES DE DECISÃO.
 - **RN-007 — Expiração da reserva:** o prazo da reserva começa na criação e dura 3 horas. Ao vencer, a TASK-005 marca a reserva como expired e libera a disponibilidade uma única vez, de forma transacional e idempotente. A TASK-005 não cancela pedido nem processa pagamento; prazo de pagamento/cancelamento de pedido e concorrência com confirmação pertencem à especificação da TASK-006.
-- **RN-008 — Verificação/pagamento:** funcionários registram conferência; apenas administrador aprova e confirma pagamento, manualmente após o WhatsApp. Nenhuma integração de pagamento é feita pelo sistema. Produção começa entre 1 e 2 horas da confirmação integral.
-- **RN-009 — Status:** transições válidas são controladas, auditadas e não podem saltar estados sem ação autorizada. Apenas a conferência do pedido por funcionário e aprovação/confirmação/cancelamento pelo administrador estão explicitamente decididas; autorização para “pronto” e “retirado” permanece PENDENTE.
+- **RN-008 — Verificação/pagamento:** employee/operador registra conferência e pode alterar estados operacionais permitidos; admin/gerente pode gerir estados permitidos. Somente admin/gerente aprova conferência, confirma pagamento manual após WhatsApp e cancela pedido. Sem integração de pagamento. Após confirmação integral, preparation_window_start fica em +1 hora e preparation_window_end em +2 horas.
+- **RN-009 — Status:** transições são controladas e auditadas no backend/banco. employee corresponde ao privilégio de operador e admin ao de gerente; ambos alteram somente transições autorizadas além da conferência inicial. Confirmação de pagamento e cancelamento são exclusivos de admin/gerente.
 - **RN-010 — Retirada:** retirada é presencial no endereço configurável. Horários regulares são seg-sex 08:00–18:30 e sáb-dom 09:00–13:00; administrador poderá configurar exceção de feriado/horário. A previsão exata é definida pelo administrador após acordo via WhatsApp.
 - **RN-011 — Perecíveis:** a contagem começa na data combinada de retirada; tolerância até 3 dias úteis (segunda a sábado, calendário de feriados configurável), com um e-mail diário. Após prazo, loja descarta e pedido não é reembolsado; o sistema encerra/cancela conforme ação autorizada e registra descarte. Duas tentativas de contato pelo WhatsApp, com intervalo de 1 hora, começam após 2 horas do horário combinado.
 - **RN-012 — Não perecíveis:** ficam aguardando até uma semana após a data combinada; após isso, cancelamento sem reembolso. Não foi definido se semana significa 7 dias corridos ou calendário comercial: PENDENTE DE DECISÃO.
@@ -136,7 +136,7 @@ Relacionamentos: cliente 1:N pedidos/carrinhos/favoritos; pedido 1:N linhas e re
 ## 9. Interfaces e integrações
 
 - **Traduções do catálogo**: conteúdo já traduzido pode ser persistido por idioma e versão da origem; provider automático, quota e cobrança estão desativados e dependem de decisão futura específica.
-- **WhatsApp**: abrir conversa com número da loja e identificador/resumo mínimo do pedido. Sem WhatsApp Business API no escopo; conversas, negociação, pagamento e reembolso são externos.
+- **WhatsApp:** link wa.me para WHATSAPP_STORE_NUMBER com mensagem pré-preenchida que a pessoa envia manualmente; sem WhatsApp Business API ou envio automático. O texto usa referência opaca, resumo de itens, total BRL autoritativo e link de acompanhamento, sem PII.
 - **E-mail transacional**: verificação, recuperação, situação/pronto, lembretes, perecíveis e alertas internos. Provedor e domínio de envio serão selecionados antes da implantação.
 - **Autenticação e dados**: Supabase Auth e Supabase Database são a plataforma aprovada. Supabase Database é o único banco de dados da aplicação e a única camada permitida para qualquer leitura ou gravação persistente; não se deve conectar a aplicação diretamente a outro banco, provedor ou driver. Auth atende confirmação por e-mail e celular, recuperação por e-mail e MFA administrativo por SMS; Database é a fonte oficial para perfis e persistência. SMS exige configurar um provedor no projeto Supabase hospedado.
 - **PDF/Excel**: geração de exportações no servidor respeitando autorização de administrador.
@@ -149,11 +149,11 @@ O protótipo/teste deverá usar projeto e credenciais isolados, dados sintético
 
 ## 11. Pendências explícitas
 
-1. Endereço, nome/número oficial do WhatsApp, domínio, logo/arquivos da marca e contatos de suporte.
+1. **PENDENTE PARA IMPLANTAÇÃO:** valor real de WHATSAPP_STORE_NUMBER, endereço, domínio, logo/arquivos da marca e contatos de suporte. Implementação usa configuração e valores sintéticos em testes; número ilustrativo não é oficial.
 2. Regra de cupons: acumulação, mínimo de compra, escopo por produto/categoria, limite por cliente, arredondamento e reutilização após cancelamento.
 3. Significado da janela de uma semana para não perecíveis (7 dias corridos ou outra contagem) e ação do sistema após prazo.
-4. A política de reembolso fornecida teve formulações conflitantes. O sistema não calcula/processa reembolso; texto legal definitivo e processo são responsabilidade da loja e devem estar visíveis antes do pagamento. Cancelamento operacional/retorno de estoque permanece definido em RN-014.
-5. Permissão para funcionário atualizar estados “pronto para retirada” e “retirado” além do registro da conferência.
+4. **PENDENTE PARA IMPLANTAÇÃO/PAGAMENTO:** texto legal final de cancelamento/reembolso não definido. Não calcular/processar reembolso; texto fornecido pela loja será ORDER_CANCELLATION_POLICY_TEXT e deve estar disponível antes da confirmação de pagamento. Testes usam somente texto sintético.
+5. **RESOLVIDO (2026-10-28, TASK-006):** employee = operador e admin = gerente para transições operacionais autorizadas além da conferência; confirmação de pagamento/cancelamento permanecem exclusivas de admin/gerente.
 6. Frequência de backup/RPO final, SLO mensal, retenção de dados, retenção de anexos e requisitos legais de privacidade.
 7. Ajuste das categorias de ocasião/tipo e conteúdo botânico de toxicidade/cuidados; conteúdo deve ser fornecido pela loja e não inventado.
 8. Alerta público de última unidade definido em RN-002; alerta de equipe no limite 7 será deduplicado conforme RN-016.
@@ -204,9 +204,11 @@ O ambiente local usa Supabase via Docker, dados sintéticos e configuração de 
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<chave-anon-local-informada-pelo-supabase-cli>
 SUPABASE_SERVICE_ROLE_KEY=<chave-service-role-local-informada-pelo-supabase-cli>
+WHATSAPP_STORE_NUMBER=<numero-sintetico-de-teste-em-E.164>
+ORDER_CANCELLATION_POLICY_TEXT=<texto-sintetico-de-teste>
 ```
 
-SUPABASE_SERVICE_ROLE_KEY é exclusivamente de servidor e nunca deve usar o prefixo NEXT_PUBLIC_. Defina $env:SUPABASE_HOME = "$PWD\.supabase-home" e $env:npm_config_cache = "$PWD\.npm-cache"; use npm run supabase:start e npm run supabase:status para iniciar a stack local e consultar os valores locais. E-mails locais são capturados pelo Mailpit; a stack usa o OTP sintético documentado e não envia SMS real.
+SUPABASE_SERVICE_ROLE_KEY é exclusivamente de servidor e nunca deve usar o prefixo NEXT_PUBLIC_. WHATSAPP_STORE_NUMBER e ORDER_CANCELLATION_POLICY_TEXT são configurações sem segredo. Defina $env:SUPABASE_HOME = "$PWD\.supabase-home" e $env:npm_config_cache = "$PWD\.npm-cache"; use npm run supabase:start e npm run supabase:status para iniciar a stack local e consultar os valores locais. E-mails locais são capturados pelo Mailpit; a stack usa o OTP sintético documentado e não envia SMS real.
 
 ### Database local e migrations
 

@@ -45,6 +45,128 @@ jobs:
       - name: Construir imagem do container
         run: docker build --pull --tag flor-da-meia-noite:${{ github.sha }} .
 
+  task006-integration:
+    name: TASK-006 Supabase integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v7.0.1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.22.1
+          cache: npm
+
+      - name: Instalar dependências do lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+
+      - name: Preparar projeto Supabase efêmero
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/task006-supabase"
+          mkdir -p "$workdir"
+          cp -R supabase "$workdir/supabase"
+          project_id="task006-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sed -i -E "s/^project_id = .*/project_id = \"$project_id\"/" "$workdir/supabase/config.toml"
+          cat >> "$workdir/supabase/config.toml" <<'EOF'
+
+          [auth.mfa.totp]
+          enroll_enabled = true
+          verify_enabled = true
+          EOF
+          echo "TASK006_SUPABASE_WORKDIR=$workdir" >> "$GITHUB_ENV"
+
+      - name: Iniciar stack efêmera e aplicar migrations
+        run: |
+          set -euo pipefail
+          supabase start --workdir "$TASK006_SUPABASE_WORKDIR"
+          supabase migration up --local --workdir "$TASK006_SUPABASE_WORKDIR"
+
+      - name: Exportar URL e chaves reais da stack local
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(supabase status --workdir "$TASK006_SUPABASE_WORKDIR" -o env)"
+          value() { printf '%s\n' "$status" | sed -n "s/^$1=//p" | head -n 1 | tr -d '\"'; }
+          api_url="$(value API_URL)"
+          anon_key="$(value ANON_KEY)"
+          service_role_key="$(value SERVICE_ROLE_KEY)"
+          test -n "$api_url" && test -n "$anon_key" && test -n "$service_role_key"
+          [[ "$api_url" == http://127.0.0.1:* || "$api_url" == http://localhost:* ]]
+          echo "::add-mask::$anon_key"
+          echo "::add-mask::$service_role_key"
+          {
+            printf 'TASK006_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK006_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK006_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'WHATSAPP_STORE_NUMBER=+15555550199\n'
+            printf 'ORDER_CANCELLATION_POLICY_TEXT=Política sintética de teste: consulte a loja antes do pagamento.\n'
+          } >> "$GITHUB_ENV"
+
+      - name: Confirmar variáveis obrigatórias
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${TASK006_TEST_SUPABASE_URL:?URL local ausente}"
+          : "${TASK006_TEST_SUPABASE_ANON_KEY:?chave anon ausente}"
+          : "${TASK006_TEST_SUPABASE_SERVICE_ROLE_KEY:?chave service role ausente}"
+          : "${WHATSAPP_STORE_NUMBER:?número sintético ausente}"
+          : "${ORDER_CANCELLATION_POLICY_TEXT:?texto sintético ausente}"
+
+      - name: Testes integrados TASK-006 (skip proibido)
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/task006-test.log"
+          set +e
+          node --import=tsx --test --test-reporter=tap tests/task006/*.test.ts 2>&1 | tee "$log"
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" -eq 0
+          if grep -Eq '^# skipped [1-9][0-9]*$|# SKIP' "$log"; then
+            echo 'TASK-006 integration tests must not be skipped.' >&2
+            exit 1
+          fi
+          grep -Eq '^ok [0-9]+ - TASK-006: Supabase isolado valida cotação, consentimento, pedido, papéis e expiração$' "$log"
+          for expected in \
+            'preço mudou desde a seleção: diferença indicada e consentimento explícito cria snapshot atualizado' \
+            'retry concorrente com a mesma idempotency key devolve o mesmo pedido' \
+            'preço alterado após a cotação aborta o commit sem consumir reserva nem cotação' \
+            'inspeção, step-up do admin e pagamento concluem reserva sem devolver estoque' \
+            'expiração libera estoque uma vez e cancela irrevogavelmente pedido não pago' \
+            'conversão concorrente com expiração produz apenas um resultado consistente'
+          do
+            grep -Fq "# Subtest: $expected" "$log" || {
+              echo "Missing TASK-006 integration scenario: $expected" >&2
+              exit 1
+            }
+          done
+
+      - name: Lint direcionado TASK-006
+        run: >-
+          npx biome check src/app/cart/page.tsx src/app/orders/'[reference]'/page.tsx
+          src/app/admin/orders/page.tsx src/app/api/orders/route.ts
+          src/app/api/orders/quote/route.ts src/app/api/orders/'[reference]'/route.ts
+          src/app/api/admin/orders/route.ts src/app/api/admin/orders/'[id]'/route.ts
+          src/lib/orders tests/task006
+
+      - name: Verificar tipos
+        run: npm run typecheck
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Construir imagem OCI
+        run: docker build --pull --tag flor-da-meia-noite-task006:${{ github.sha }} .
+
   task005-integration:
     name: TASK-005 Supabase integration
     runs-on: ubuntu-latest

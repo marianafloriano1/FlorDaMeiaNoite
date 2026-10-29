@@ -17,9 +17,10 @@
     "test:auth": "node --import=tsx --test tests/auth/task003.test.ts",
     "test:catalog": "node --experimental-test-module-mocks --import=tsx --test tests/catalog/*.test.ts tests/translation/*.test.ts",
     "test:task005": "node --import=tsx --test tests/task005/*.test.ts",
+    "test:task006": "node --import=tsx --test tests/task006/*.test.ts",
     "worker:reservation-expiration": "node src/workers/reservation-expiration.mjs",
     "test:auth:supabase-mfa": "node --import=tsx --test tests/auth/task003.supabase-mfa.test.ts",
-    "lint": "biome check src tests/auth tests/catalog tests/translation next.config.ts",
+    "lint": "biome check src tests/auth tests/catalog tests/translation tests/task006 next.config.ts",
     "format": "biome format --write src next.config.ts",
     "typecheck": "next typegen && tsc --noEmit"
   },
