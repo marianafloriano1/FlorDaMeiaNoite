@@ -422,3 +422,5 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - GATE-001 a GATE-007: CONCLUÍDOS; 7/7 gates, sem pendências ou bloqueios obrigatórios. T001–T011 PASS; migration 202610250002 aplicada e validada na stack isolada, com fixtures sintéticas revertidas em transação. Relatório: docs/reports/TASK-004-etapa-007-conclusao.md.
 - TASK-004: DONE. Provider/quota/cobrança de tradução permanecem desativados; quatro diagnósticos globais preexistentes TASK-003 continuam sem alteração e fora do escopo aceito. P2 de imagem local/Storage documentados como não bloqueantes.
 - Nenhum código funcional ou arquivo da TASK-003 alterado nesta etapa. Próxima candidata TASK-005 não iniciada; autorização e DoR próprios requeridos. Checkout sem .git; nenhuma operação de Git executada.
+
+
