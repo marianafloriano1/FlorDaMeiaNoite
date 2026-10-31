@@ -17,7 +17,7 @@ type SavedOrder = CreatedOrder & {
   preparation_window_end?: string | null;
   cancellation_reason?: string | null;
 };
-type OrderLink = { order: CreatedOrder; whatsappUrl: string };
+type OrderLink = { order: CreatedOrder; whatsappUrl: string | null };
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -27,6 +27,7 @@ export default function CartPage() {
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [orders, setOrders] = useState<SavedOrder[]>([]);
   const [quote, setQuote] = useState<OrderQuote | null>(null);
+  const [couponCode, setCouponCode] = useState("");
   const [consent, setConsent] = useState(false);
   const [orderLink, setOrderLink] = useState<OrderLink | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,7 +136,10 @@ export default function CartPage() {
       const response = await fetch("/api/orders/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservationId: reservation.id }),
+        body: JSON.stringify({
+          reservationId: reservation.id,
+          couponCode: couponCode.trim() || null,
+        }),
       });
       const body = (await response.json().catch(() => ({}))) as {
         quote?: OrderQuote;
@@ -174,15 +178,17 @@ export default function CartPage() {
       });
       const body = (await response.json().catch(() => ({}))) as {
         order?: CreatedOrder;
-        whatsappUrl?: string;
+        whatsappUrl?: string | null;
         error?: string;
       };
-      if (response.ok && body.order && body.whatsappUrl) {
-        setOrderLink({ order: body.order, whatsappUrl: body.whatsappUrl });
+      if (response.ok && body.order) {
+        setOrderLink({ order: body.order, whatsappUrl: body.whatsappUrl ?? null });
         setQuote(null);
         setConsent(false);
         setMessage(
-          "Pedido criado. Revise e envie manualmente a mensagem no WhatsApp; isso não confirma pagamento.",
+          body.whatsappUrl
+            ? "Pedido criado. Revise e envie manualmente a mensagem no WhatsApp; isso não confirma pagamento."
+            : "Pedido criado. O WhatsApp não está disponível; você pode acompanhar o pedido nesta página.",
         );
         await load();
       } else if (body.error === "order_quote_changed") {
@@ -195,8 +201,6 @@ export default function CartPage() {
         setReservation(null);
         setMessage("A reserva expirou. O pedido não foi criado e o estoque foi liberado.");
         await load();
-      } else if (body.error === "whatsapp_not_configured") {
-        setMessage("O canal de atendimento ainda não está configurado. O pedido não foi criado.");
       } else setMessage("Não foi possível criar o pedido. Confira a reserva e tente novamente.");
     } catch {
       setMessage("Não foi possível criar o pedido. Tente novamente.");
@@ -323,9 +327,19 @@ export default function CartPage() {
         </button>
       </div>
       {reservation && !orderForReservation && !quote && (
-        <button type="button" disabled={pending} onClick={() => void reviewOrder()}>
-          Revisar total e criar pedido
-        </button>
+        <section className="intro" aria-label="Cupom e cotação">
+          <label htmlFor="coupon-code">Cupom (opcional)</label>
+          <input
+            id="coupon-code"
+            value={couponCode}
+            maxLength={40}
+            autoComplete="off"
+            onChange={(event) => setCouponCode(event.target.value)}
+          />
+          <button type="button" disabled={pending} onClick={() => void reviewOrder()}>
+            Revisar total e criar pedido
+          </button>
+        </section>
       )}
       {quote && (
         <section className="intro" aria-labelledby="quote-title">
@@ -345,6 +359,15 @@ export default function CartPage() {
               </li>
             ))}
           </ul>
+          <p>
+            Subtotal: <strong>{brl.format(quote.subtotal_brl ?? quote.total_brl)}</strong>
+          </p>
+          {quote.coupon && (
+            <p>
+              Cupom {quote.coupon.code}: desconto de{" "}
+              <strong>{brl.format(quote.coupon.discount_brl)}</strong>
+            </p>
+          )}
           <p>
             Total atual: <strong>{brl.format(quote.total_brl)}</strong>
           </p>
@@ -372,6 +395,12 @@ export default function CartPage() {
           <h2 id="pending-order-title">Pedido aguardando pagamento</h2>
           <p>Referência: {orderForReservation.reference}</p>
           <p>Total: {brl.format(orderForReservation.total_brl)}</p>
+          {orderForReservation.discount_brl ? (
+            <p>
+              Cupom {orderForReservation.coupon_code}: desconto{" "}
+              {brl.format(orderForReservation.discount_brl)}
+            </p>
+          ) : null}
           <Link href={`/orders/${orderForReservation.reference}`}>Acompanhar pedido</Link>
         </section>
       )}
@@ -380,11 +409,13 @@ export default function CartPage() {
           <Link href={`/orders/${orderLink.order.reference}`}>
             Acompanhar pedido {orderLink.order.reference}
           </Link>
-          <p>
-            <a href={orderLink.whatsappUrl} target="_blank" rel="noreferrer">
-              Abrir mensagem pré-preenchida no WhatsApp
-            </a>
-          </p>
+          {orderLink.whatsappUrl ? (
+            <p>
+              <a href={orderLink.whatsappUrl} target="_blank" rel="noreferrer">
+                Abrir mensagem pré-preenchida no WhatsApp
+              </a>
+            </p>
+          ) : null}
         </section>
       )}
       {orders

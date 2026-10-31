@@ -4,10 +4,22 @@ export function parseUuid(value: unknown): string | null {
   return typeof value === "string" && UUID_PATTERN.test(value) ? value : null;
 }
 
-export function parseOrderQuoteInput(value: unknown): { reservationId: string } | null {
+export function parseOrderQuoteInput(
+  value: unknown,
+): { reservationId: string; couponCode: string | null } | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const reservationId = parseUuid((value as Record<string, unknown>).reservationId);
-  return reservationId ? { reservationId } : null;
+  const body = value as Record<string, unknown>;
+  if (Object.keys(body).some((key) => key !== "reservationId" && key !== "couponCode")) return null;
+  const reservationId = parseUuid(body.reservationId);
+  const code =
+    body.couponCode === undefined || body.couponCode === null || body.couponCode === ""
+      ? null
+      : body.couponCode;
+  if (code !== null && (typeof code !== "string" || !/^[A-Za-z0-9_-]{3,40}$/.test(code.trim())))
+    return null;
+  return reservationId
+    ? { reservationId, couponCode: typeof code === "string" ? code.trim().toUpperCase() : null }
+    : null;
 }
 
 export function parseCreateOrderInput(value: unknown): {

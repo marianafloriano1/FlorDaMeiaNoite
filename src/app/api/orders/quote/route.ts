@@ -15,8 +15,9 @@ export async function POST(request: Request) {
   if (!input) return json({ error: "invalid_order_quote" }, 400);
   try {
     const supabase = await getSupabaseServerClient();
-    const { data, error } = await supabase.rpc("create_order_quote", {
+    const { data, error } = await supabase.rpc("create_order_quote_with_coupon", {
       p_reservation_id: input.reservationId,
+      p_coupon_code: input.couponCode,
     });
     if (error) {
       if (error.message.includes("reservation_not_found"))
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
         return json({ error: "reservation_expired" }, 409);
       if (error.message.includes("order_product_unavailable"))
         return json({ error: "product_unavailable" }, 409);
+      if (error.message.includes("coupon_")) return json({ error: "coupon_invalid" }, 400);
       return json({ error: "order_quote_unavailable" }, 503);
     }
     return json({ quote: data });
