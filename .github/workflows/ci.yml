@@ -357,21 +357,30 @@ jobs:
       - name: Testes unitários e HTTP TASK-009
         run: npm run test:task009
 
+      
       - name: Testes Supabase TASK-009 (skip proibido)
         shell: bash
         run: |
           set -euo pipefail
           log="$RUNNER_TEMP/task009-test.log"
+
           set +e
-          npm run test:task009:integration 2>&1 | tee "$log"
+          node --import=tsx --test --test-reporter=tap tests/task009/*.integration.test.ts 2>&1 | tee "$log"
           result=${PIPESTATUS[0]}
           set -e
-          test "$result" -eq 0
+
+          if [ "$result" -ne 0 ]; then
+            echo "TASK-009 integration tests failed with exit code $result" >&2
+            exit "$result"
+          fi
+
           if grep -Eq '^# skipped [1-9][0-9]*$|# SKIP' "$log"; then
             echo 'TASK-009 Supabase integration tests must not be skipped.' >&2
             exit 1
           fi
+
           grep -Eq '^ok [0-9]+ - TASK-009: Supabase isolado valida agenda, ciclo por linha, cancelamento e descarte$' "$log"
+
           for expected in \
             'RPC administrativa rejeita AAL2 sem prova MFA recente e não renova o timestamp' \
             'agenda, classificação e cancelamento pago devolvem apenas saldo não usado uma vez' \
@@ -382,6 +391,7 @@ jobs:
               exit 1
             }
           done
+
 
       - name: Lint direcionado TASK-009
         run: npm run lint:task009
