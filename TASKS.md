@@ -159,14 +159,14 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - TASK-005 marcada DONE por solicitação explícita da usuária em 2026-10-28 após aprovação dos GATE-001–007. TASK-006 não iniciada; nenhuma TASK posterior iniciada automaticamente.
 ## TASK-006 — Pedido e transição para WhatsApp
 
-- **Status:** IN_REVIEW | **Branch:** `task/TASK-006-checkout-pedidos` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-007/009/010; RN-007/008/009; RNF-010; UC-03/04; ADR-003.
-- **Etapa 007 (2026-10-28):** GATE-007 e GATE-001–006 registrados como APROVADOS no relatório final da Etapa 007. TASK-006 permanece IN_REVIEW, não DONE, conforme o registro da própria etapa; número oficial de WhatsApp e texto final de cancelamento continuam pré-requisitos operacionais antes da implantação/confirmação de pagamento. A implementação e os relatórios detalhados estão no checkout separado da branch, ainda com alterações locais não commitadas/pushadas; esta atualização consolida apenas o estado no backlog integrado.
+- **Status:** DONE | **Branch:** `task/TASK-006-checkout-pedidos` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-007/009/010; RN-007/008/009; RNF-010; UC-03/04; ADR-003.
+- **Etapa 007 (2026-10-28; estado final reconciliado em 2026-11-02):** GATE-001–007 registrados como APROVADOS no relatório final da Etapa 007. A solicitante autorizou explicitamente concluir a TASK-006 após os sete gates; status atualizado para DONE. Número oficial de WhatsApp e texto final de cancelamento permanecem pré-requisitos operacionais antes da implantação/confirmação de pagamento, não bloqueios dos gates concluídos. A implementação e os relatórios detalhados estão no checkout separado da branch.
 - **Objetivo:** vincular pedido ao cliente, criar resumo para WhatsApp e suportar conferência por funcionário e aprovação/confirmação pelo administrador.
 - **Allowed Changes:** Order/OrderItem/OrderInspection/payment confirmation event; painel de fila; link WhatsApp; status e audit log.
 - **Incidental:** mensagens de erro e recuperação do link após bloqueio de popup.
 - **Forbidden:** pagamento no site; armazenar cartão; confirmar pagamento por funcionário; pôr CPF completo na URL ou texto WhatsApp; alterar preço sem consentimento.
-- **Aceite:** funcionário registra conferência; administrador com OTP aprova e marca pago; pedido tem estados e histórico; link abre conversa da loja com identificador seguro; pagamento integral confirmado precede preparo; preparo começa entre 1–2 h e previsão fica clara/configurável. Permissão para funcionário mudar estados além de registrar conferência fica pendente e não deve ser presumida.
-- **Pendências antes de iniciar:** número WhatsApp oficial; definição de como representar a janela de produção de 1–2 horas; política de preço/conteúdo do link.
+- **Aceite:** funcionário registra conferência; administrador com OTP aprova e marca pago; pedido tem estados e histórico; link abre conversa da loja com identificador seguro; pagamento integral confirmado precede preparo; janela de preparo é de +1 a +2 horas. Para a TASK-009, employee prepara, marca pronto e confirma retirada; admin agenda e cancela. Consentimento explícito do cliente é exigido se a cotação mudar antes da criação do pedido.
+- **Pendências operacionais antes de implantação/confirmação de pagamento:** número oficial de WhatsApp em `WHATSAPP_STORE_NUMBER` e texto final de cancelamento em `ORDER_CANCELLATION_POLICY_TEXT`; sem envio automatizado ou processamento de reembolso.
 - **Validação:** testes de transição, permissões e link sem PII excessiva.
 - **DoD:** nenhum pagamento processado; registro financeiro mínimo auditável.
 
@@ -202,13 +202,17 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-009 — Gestão de pedido, retirada e cancelamentos
 
-- **Status:** BLOCKED | **DEPENDS_ON:** TASK-006, TASK-007 | **Rastreabilidade:** RF-009..014/020; RN-008..014; RNF-010; UC-04/05/07; ADR-003.
+- **Status:** IN_REVIEW | **Branch:** `task/TASK-009-gestao-pedidos-retirada` | **DEPENDS_ON:** TASK-006, TASK-007 | **Rastreabilidade:** RF-009..014/020; RN-008..014; RNF-010; UC-04/05/07; ADR-003.
 - **Objetivo:** concluir preparação/retirada, agenda, cancelamento e retorno seletivo de estoque.
 - **Allowed Changes:** Order status/pickup/cancellation; agenda e tela de pedidos; seleção de itens usados; confirmação de retirada; avisos de política.
 - **Incidental:** auditoria de decisões e timeline para cliente.
-- **Forbidden:** cálculo ou execução de reembolso; cancelamento por funcionário; retornar itens usados/finalizados; alterar pedido sem acordo do cliente; inventar responsabilidade legal.
-- **Aceite:** administrador define retirada; cliente vê previsão; status de pronto/retirado é alterado apenas por papel aprovado em requisito; cancelamento só administrador e exige estágio (não preparado/em preparo/finalizado); retorno de estoque corresponde exatamente aos itens não usados; tratamento de perecíveis/não perecíveis segue regra aprovada; defeito registrado para tratativa pelo WhatsApp.
-- **Pendente:** uma semana corridos/calendário; permissão de equipe para alterar estados de pedido; estados finais de descarte.
+- **Forbidden:** cálculo ou execução de reembolso; cancelamento por funcionário; retornar itens usados, retirados ou descartados; cancelar pedido pago sem registro auditável do acordo do cliente; inventar responsabilidade legal.
+- **Aceite:** administrador define retirada; employee prepara, marca pronto e confirma retirada; cliente vê previsão; somente admin cancela e agenda; cancelamento pago registra acordo; retorno de estoque por linha corresponde exatamente às linhas não usadas; perecíveis são descartados por linha após 3 dias úteis (segunda a sábado, sem excluir feriados); não perecíveis podem ser cancelados por admin após 7 dias corridos; pedido misto só é terminal após todas as linhas resolvidas; defeito registrado para tratativa manual via WhatsApp.
+- **Etapa 002 — Pré-condições (registro restaurado em 2026-11-02):** GATE-002 CONCLUÍDO conforme aprovação anterior reportada pela solicitante. Dependências TASK-006 e TASK-007 estão DONE; regras de negócio constam em `docs/reports/TASK-009-etapa-002-pre-condicoes.md`. O relatório original não foi localizado após a reestruturação; a cópia restaurada identifica sua proveniência e não alega testes executados.
+- **Etapa 003 — Planejamento (registro restaurado em 2026-11-02):** GATE-003 CONCLUÍDO conforme aprovação anterior reportada pela solicitante. Plano, matriz de critérios/arquivos/testes, riscos e rollback estão em `docs/reports/TASK-009-etapa-003-planejamento.md`. O relatório original não foi localizado; a cópia restaurada registra essa limitação. Nenhum teste ou implementação é atribuído ao planejamento.
+- **Etapa 004 — Implementação (2026-11-02):** migration aditiva, RPCs transacionais, APIs, painel admin, acompanhamento do cliente, testes direcionados e job de integração Linux estão implementados/preparados; evidência em `docs/reports/TASK-009-etapa-004-implementacao.md`. Implementação em revisão. Testes HTTP/unitários 10/10, Biome direcionado, typecheck e `git diff --check` passaram. Migration/integração não executadas porque Docker Engine está indisponível; build local bloqueado por resolução de dependências fora do root e `EPERM` em `.next`; CI ainda não executada.
+- **GATE-004:** BLOQUEADO até a integração Supabase efêmera e o build/OCI passarem. Etapa 005 NÃO habilitada.
+- **Pendente:** executar job Linux `TASK-009 Supabase integration` e validar build/OCI; texto legal final de cancelamento/reembolso continua condição de implantação e não autoriza cálculo ou processamento de reembolso.
 - **Validação:** matriz de transição, devolução seletiva, abuso de permissão e auditoria.
 - **DoD:** política informativa aprovada visível antes de pagamento; nenhuma regra financeira calculada.
 

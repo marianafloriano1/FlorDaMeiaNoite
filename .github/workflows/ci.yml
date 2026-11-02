@@ -37,8 +37,12 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/task/TASK-007') || startsWith(github.head_ref, 'task/TASK-007')
         run: npm run lint:task007
 
+      - name: Lint direcionado TASK-009
+        if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
+        run: npm run lint:task009
+
       - name: Lint global
-        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') }}
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') }}
         run: npm run lint
 
       - name: Verificar tipos
@@ -51,8 +55,12 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/task/TASK-007') || startsWith(github.head_ref, 'task/TASK-007')
         run: docker build --pull --build-arg TASK007_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
 
+      - name: Construir imagem do container TASK-009
+        if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
+        run: docker build --pull --build-arg TASK009_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
+
       - name: Construir imagem do container
-        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') }}
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') }}
         run: docker build --pull --tag flor-da-meia-noite:${{ github.sha }} .
 
   task006-integration:
@@ -280,4 +288,103 @@ jobs:
           src/workers/reservation-expiration.mjs
 
       - name: Verificar tipos
+        run: npm run typecheck
+
+  task009-integration:
+    name: TASK-009 Supabase integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v7.0.1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.22.1
+          cache: npm
+
+      - name: Instalar dependências do lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+
+      - name: Preparar projeto Supabase efêmero
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/task009-supabase"
+          mkdir -p "$workdir"
+          cp -R supabase "$workdir/supabase"
+          project_id="task009-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sed -i -E "s/^project_id = .*/project_id = \"$project_id\"/" "$workdir/supabase/config.toml"
+          cat >> "$workdir/supabase/config.toml" <<'EOF'
+
+          [auth.mfa.totp]
+          enroll_enabled = true
+          verify_enabled = true
+          EOF
+          echo "TASK009_SUPABASE_WORKDIR=$workdir" >> "$GITHUB_ENV"
+
+      - name: Iniciar stack efêmera e aplicar migrations
+        run: |
+          set -euo pipefail
+          supabase start --workdir "$TASK009_SUPABASE_WORKDIR"
+          supabase migration up --local --workdir "$TASK009_SUPABASE_WORKDIR"
+
+      - name: Exportar e validar credenciais locais sintéticas
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(supabase status --workdir "$TASK009_SUPABASE_WORKDIR" -o env)"
+          value() { printf '%s\n' "$status" | sed -n "s/^$1=//p" | head -n 1 | tr -d '\"'; }
+          api_url="$(value API_URL)"
+          anon_key="$(value ANON_KEY)"
+          service_role_key="$(value SERVICE_ROLE_KEY)"
+          test -n "$api_url" && test -n "$anon_key" && test -n "$service_role_key"
+          [[ "$api_url" == http://127.0.0.1:* || "$api_url" == http://localhost:* ]]
+          echo "::add-mask::$anon_key"
+          echo "::add-mask::$service_role_key"
+          {
+            printf 'TASK009_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK009_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+          } >> "$GITHUB_ENV"
+
+      - name: Testes unitários e HTTP TASK-009
+        run: npm run test:task009
+
+      - name: Testes Supabase TASK-009 (skip proibido)
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/task009-test.log"
+          set +e
+          npm run test:task009:integration 2>&1 | tee "$log"
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" -eq 0
+          if grep -Eq '^# skipped [1-9][0-9]*$|# SKIP' "$log"; then
+            echo 'TASK-009 Supabase integration tests must not be skipped.' >&2
+            exit 1
+          fi
+          grep -Eq '^ok [0-9]+ - TASK-009: Supabase isolado valida agenda, ciclo por linha, cancelamento e descarte$' "$log"
+          for expected in \
+            'RPC administrativa rejeita AAL2 sem prova MFA recente e não renova o timestamp' \
+            'agenda, classificação e cancelamento pago devolvem apenas saldo não usado uma vez' \
+            'descarte de perecível após três dias úteis não devolve estoque'
+          do
+            grep -Fq "# Subtest: $expected" "$log" || {
+              echo "Missing TASK-009 integration scenario: $expected" >&2
+              exit 1
+            }
+          done
+
+      - name: Lint direcionado TASK-009
+        run: npm run lint:task009
+
+      - name: Verificar tipos TASK-009
         run: npm run typecheck

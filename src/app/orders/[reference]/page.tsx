@@ -10,6 +10,7 @@ const labels: Record<string, string> = {
   ready_for_pickup: "Pronto para retirada",
   picked_up: "Retirado com sucesso",
   cancelled: "Cancelado",
+  resolved: "Pedido concluído",
 };
 
 type Detail = {
@@ -20,6 +21,7 @@ type Detail = {
     preparation_window_start: string | null;
     preparation_window_end: string | null;
     cancellation_reason: string | null;
+    scheduled_pickup_at: string | null;
     created_at: string;
   };
   items: Array<{
@@ -27,6 +29,8 @@ type Detail = {
     product_name: string;
     quantity: number;
     unit_price_brl: number;
+    perishability: "perishable" | "non_perishable" | null;
+    line_status: "open" | "picked_up" | "cancelled" | "discarded";
   }>;
   events: Array<{
     id: string;
@@ -95,6 +99,15 @@ export default function OrderTrackingPage() {
                 .
               </p>
             )}
+          {detail.order.scheduled_pickup_at && (
+            <p>
+              Retirada acordada para{" "}
+              {new Date(detail.order.scheduled_pickup_at).toLocaleString("pt-BR", {
+                timeZone: "America/Sao_Paulo",
+              })}
+              .
+            </p>
+          )}
           {detail.order.cancellation_reason === "reservation_expired" && (
             <p>
               A reserva expirou antes da confirmação do pagamento; o pedido foi cancelado e a
@@ -118,6 +131,14 @@ export default function OrderTrackingPage() {
             {detail.items.map((item) => (
               <li key={item.product_id}>
                 {item.product_name} × {item.quantity} —{" "}
+                {item.line_status === "discarded"
+                  ? "descartado"
+                  : item.line_status === "picked_up"
+                    ? "retirado"
+                    : item.line_status === "cancelled"
+                      ? "cancelado"
+                      : "em aberto"}{" "}
+                —{" "}
                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
                   item.unit_price_brl,
                 )}

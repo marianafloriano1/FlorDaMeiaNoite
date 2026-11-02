@@ -17,7 +17,7 @@ export async function GET(_request: Request, context: { params: Promise<{ refere
     const { data: order, error } = await supabase
       .from("orders")
       .select(
-        "id,public_reference,status,total_brl,payment_confirmed_at,preparation_window_start,preparation_window_end,cancellation_reason,created_at",
+        "id,public_reference,status,total_brl,payment_confirmed_at,preparation_window_start,preparation_window_end,cancellation_reason,scheduled_pickup_at,created_at",
       )
       .eq("public_reference", reference)
       .maybeSingle();
@@ -25,7 +25,9 @@ export async function GET(_request: Request, context: { params: Promise<{ refere
     const [items, events] = await Promise.all([
       supabase
         .from("order_items")
-        .select("product_id,product_name,product_slug,quantity,unit_price_brl")
+        .select(
+          "product_id,product_name,product_slug,quantity,unit_price_brl,perishability,line_status",
+        )
         .eq("order_id", order.id),
       supabase
         .from("order_events")

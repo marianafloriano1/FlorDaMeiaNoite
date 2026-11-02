@@ -8,14 +8,15 @@ function json(body: unknown, status = 200) {
 
 export async function GET() {
   const identity = await requireSession();
-  if (identity?.role !== "employee" && identity?.role !== "admin")
+  if (!identity) return json({ error: "authentication_required" }, 401);
+  if (identity.role !== "employee" && identity.role !== "admin")
     return json({ error: "forbidden" }, 403);
   try {
     const admin = getSupabaseAdminClient();
     const { data: orders, error } = await admin
       .from("orders")
       .select(
-        "id,public_reference,customer_id,reservation_id,status,total_brl,payment_confirmed_at,preparation_window_start,preparation_window_end,cancellation_reason,created_at",
+        "id,public_reference,customer_id,reservation_id,status,total_brl,payment_confirmed_at,preparation_window_start,preparation_window_end,cancellation_reason,scheduled_pickup_at,pickup_scheduled_at,created_at",
       )
       .order("created_at", { ascending: false })
       .limit(200);
@@ -25,7 +26,9 @@ export async function GET() {
       ? await Promise.all([
           admin
             .from("order_items")
-            .select("order_id,product_id,product_name,product_slug,quantity,unit_price_brl")
+            .select(
+              "id,order_id,product_id,product_name,product_slug,quantity,unit_price_brl,perishability,line_status,quantity_used,resolved_at",
+            )
             .in("order_id", ids),
           admin
             .from("order_inspections")
@@ -44,6 +47,7 @@ export async function GET() {
         inspection:
           (inspections.data ?? []).find((inspection) => inspection.order_id === order.id) ?? null,
       })),
+      role: identity.role,
     });
   } catch {
     return json({ error: "admin_orders_unavailable" }, 503);
