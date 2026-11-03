@@ -59,6 +59,37 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
         run: docker build --pull --build-arg TASK009_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
 
+      - name: Iniciar container e verificar endpoint TASK-009
+        if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="task009-oci-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() {
+            docker rm -f "$container" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run --detach \
+            --name "$container" \
+            --publish 127.0.0.1:3000:3000 \
+            "flor-da-meia-noite:${GITHUB_SHA}"
+
+          for attempt in {1..30}; do
+            status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --connect-timeout 2 --max-time 5 \
+              http://127.0.0.1:3000/auth 2>/dev/null || true)"
+            if [ "$status" = "200" ]; then
+              echo "OCI smoke test: GET /auth returned HTTP 200."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs --tail 80 "$container" || true
+          echo "::error::OCI container did not serve GET /auth with HTTP 200."
+          exit 1
+
       - name: Construir imagem do container
         if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') }}
         run: docker build --pull --tag flor-da-meia-noite:${{ github.sha }} .
