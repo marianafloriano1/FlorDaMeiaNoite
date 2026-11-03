@@ -94,12 +94,7 @@ jobs:
           cp -R supabase "$workdir/supabase"
           project_id="task006-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           sed -i -E "s/^project_id = .*/project_id = \"$project_id\"/" "$workdir/supabase/config.toml"
-          cat >> "$workdir/supabase/config.toml" <<'EOF'
 
-          [auth.mfa.totp]
-          enroll_enabled = true
-          verify_enabled = true
-          EOF
           echo "TASK006_SUPABASE_WORKDIR=$workdir" >> "$GITHUB_ENV"
 
       - name: Iniciar stack efêmera e aplicar migrations
@@ -290,10 +285,12 @@ jobs:
       - name: Verificar tipos
         run: npm run typecheck
 
+
   task009-integration:
     name: TASK-009 Supabase integration
     runs-on: ubuntu-latest
     timeout-minutes: 35
+
     steps:
       - name: Obter código
         uses: actions/checkout@v7.0.1
@@ -316,82 +313,137 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           workdir="$RUNNER_TEMP/task009-supabase"
+
           mkdir -p "$workdir"
           cp -R supabase "$workdir/supabase"
-          project_id="task009-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          sed -i -E "s/^project_id = .*/project_id = \"$project_id\"/" "$workdir/supabase/config.toml"
-          cat >> "$workdir/supabase/config.toml" <<'EOF'
 
-          [auth.mfa.totp]
-          enroll_enabled = true
-          verify_enabled = true
-          EOF
+          project_id="task009-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          sed -i -E \
+            "s/^project_id = .*/project_id = \"$project_id\"/" \
+            "$workdir/supabase/config.toml"
+
+
           echo "TASK009_SUPABASE_WORKDIR=$workdir" >> "$GITHUB_ENV"
 
       - name: Iniciar stack efêmera e aplicar migrations
-        run: |
-          set -euo pipefail
-          supabase start --workdir "$TASK009_SUPABASE_WORKDIR"
-          supabase migration up --local --workdir "$TASK009_SUPABASE_WORKDIR"
-
-      - name: Exportar e validar credenciais locais sintéticas
         shell: bash
         run: |
           set -euo pipefail
-          status="$(supabase status --workdir "$TASK009_SUPABASE_WORKDIR" -o env)"
-          value() { printf '%s\n' "$status" | sed -n "s/^$1=//p" | head -n 1 | tr -d '\"'; }
+
+          supabase start --workdir "$TASK009_SUPABASE_WORKDIR"
+
+          supabase migration up \
+            --local \
+            --workdir "$TASK009_SUPABASE_WORKDIR"
+
+      - name: Exportar credenciais locais sintéticas
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          status="$(supabase status \
+            --workdir "$TASK009_SUPABASE_WORKDIR" \
+            -o env)"
+
+          value() {
+            printf '%s\n' "$status" |
+              sed -n "s/^$1=//p" |
+              head -n 1 |
+              tr -d '"'
+          }
+
           api_url="$(value API_URL)"
           anon_key="$(value ANON_KEY)"
           service_role_key="$(value SERVICE_ROLE_KEY)"
-          test -n "$api_url" && test -n "$anon_key" && test -n "$service_role_key"
+
+          test -n "$api_url"
+          test -n "$anon_key"
+          test -n "$service_role_key"
+
           [[ "$api_url" == http://127.0.0.1:* || "$api_url" == http://localhost:* ]]
+
           echo "::add-mask::$anon_key"
           echo "::add-mask::$service_role_key"
+
           {
             printf 'TASK009_TEST_SUPABASE_URL=%s\n' "$api_url"
             printf 'TASK009_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
             printf 'TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
           } >> "$GITHUB_ENV"
 
-      - name: Testes unitários e HTTP TASK-009
-        run: npm run test:task009
-
-      
-      - name: Testes Supabase TASK-009 (skip proibido)
+      - name: Validar credenciais obrigatórias
         shell: bash
         run: |
           set -euo pipefail
+
+          : "${TASK009_TEST_SUPABASE_URL:?URL local ausente}"
+          : "${TASK009_TEST_SUPABASE_ANON_KEY:?Chave anon ausente}"
+          : "${TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY:?Chave service role ausente}"
+
+      - name: Testes unitários e HTTP TASK-009
+        run: npm run test:task009
+
+      - name: Testes Supabase TASK-009 (TAP e skip proibido)
+        shell: bash
+        run: |
+          set -euo pipefail
+
           log="$RUNNER_TEMP/task009-test.log"
 
+          echo "Executando testes de integração TASK-009..."
+
           set +e
-          node --import=tsx --test --test-reporter=tap tests/task009/*.integration.test.ts 2>&1 | tee "$log"
+          node --import=tsx --test --test-reporter=tap \
+            tests/task009/*.integration.test.ts 2>&1 | tee "$log"
+
           result=${PIPESTATUS[0]}
           set -e
 
+          echo "Node exit code: $result"
+
           if [ "$result" -ne 0 ]; then
-            echo "TASK-009 integration tests failed with exit code $result" >&2
+            echo "::error::Os testes de integração TASK-009 falharam."
+            tail -n 100 "$log"
             exit "$result"
           fi
 
-          if grep -Eq '^# skipped [1-9][0-9]*$|# SKIP' "$log"; then
-            echo 'TASK-009 Supabase integration tests must not be skipped.' >&2
+          echo "Validando resultado TAP..."
+
+          if ! grep -Eq '^# tests [1-9][0-9]*$' "$log"; then
+            echo "::error::Nenhum teste foi executado."
             exit 1
           fi
 
-          grep -Eq '^ok [0-9]+ - TASK-009: Supabase isolado valida agenda, ciclo por linha, cancelamento e descarte$' "$log"
+          if ! grep -Eq '^# fail 0$' "$log"; then
+            echo "::error::Existem testes com falha."
+            exit 1
+          fi
+
+          if grep -Eq '^# skipped [1-9][0-9]*$|^# SKIP' "$log"; then
+            echo "::error::Existem testes ignorados."
+            exit 1
+          fi
+
+          if ! grep -Eq '^ok [0-9]+ - TASK-009: Supabase isolado valida agenda, ciclo por linha, cancelamento e descarte$' "$log"; then
+            echo "::error::O teste principal TASK-009 não foi encontrado."
+            exit 1
+          fi
 
           for expected in \
             'RPC administrativa rejeita AAL2 sem prova MFA recente e não renova o timestamp' \
             'agenda, classificação e cancelamento pago devolvem apenas saldo não usado uma vez' \
             'descarte de perecível após três dias úteis não devolve estoque'
           do
-            grep -Fq "# Subtest: $expected" "$log" || {
-              echo "Missing TASK-009 integration scenario: $expected" >&2
+            if ! grep -Fq "# Subtest: $expected" "$log"; then
+              echo "::error::Cenário de integração ausente: $expected"
               exit 1
-            }
+            fi
           done
 
+          echo "TASK-009: integração Supabase aprovada."
 
       - name: Lint direcionado TASK-009
         run: npm run lint:task009
