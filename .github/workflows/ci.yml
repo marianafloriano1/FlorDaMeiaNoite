@@ -506,3 +506,15 @@ jobs:
 
       - name: Verificar tipos TASK-009
         run: npm run typecheck
+
+      - name: Encerrar stack Supabase efêmera TASK-009
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -n "${TASK009_SUPABASE_WORKDIR:-}" ]]; then
+            supabase stop --workdir "$TASK009_SUPABASE_WORKDIR" --no-backup
+          else
+            echo "Stack Supabase TASK-009 não foi preparada; nada a encerrar."
+          fi
