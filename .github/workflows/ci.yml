@@ -414,6 +414,31 @@ jobs:
           : "${TASK009_TEST_SUPABASE_ANON_KEY:?Chave anon ausente}"
           : "${TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY:?Chave service role ausente}"
 
+      - name: Regressão TASK-003 Auth MFA na stack efêmera (skip proibido)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NEXT_PUBLIC_SUPABASE_URL="$TASK009_TEST_SUPABASE_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$TASK009_TEST_SUPABASE_ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY"
+          log="$RUNNER_TEMP/task003-auth-mfa.log"
+
+          set +e
+          node --import=tsx --test --test-reporter=tap \
+            tests/auth/task003.supabase-mfa.test.ts 2>&1 | tee "$log"
+          result=${PIPESTATUS[0]}
+          set -e
+
+          test "$result" -eq 0
+          grep -Eq '^# tests 1$' "$log"
+          grep -Eq '^# pass 1$' "$log"
+          grep -Eq '^# fail 0$' "$log"
+          if grep -Eq '^# skipped [1-9][0-9]*$|^# SKIP' "$log"; then
+            echo 'TASK-003 Supabase MFA regression test must not be skipped.' >&2
+            exit 1
+          fi
+          grep -Fq 'ok 1 - local Supabase Auth completes synthetic phone MFA and reaches aal2' "$log"
+
       - name: Testes unitários e HTTP TASK-009
         run: npm run test:task009
 
