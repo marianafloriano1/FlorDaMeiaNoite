@@ -1,59 +1,57 @@
 # TASK-009 — Etapa 004 — Implementação
 
-**Data:** 2026-11-02
+**Revalidação:** 2026-11-03 23:02 America/Sao_Paulo
 **Checkout:** `flor-da-meia-noite-task-009`
 **Branch:** `task/TASK-009-gestao-pedidos-retirada`
 **Base observada:** `356ab8048896905f4b30c0cc78d2aa700ae30007`
+**Commit validado por CI:** `d1f9c3ebe574b3bc9a5af033a5c71ef28fcbaa9d` — [CI 41757612439](https://github.com/marianafloriano1/FlorDaMeiaNoite/actions/runs/41757612439)
+**Commit local adicional, ainda não enviado:** `43b5feacd5d3777c5a26cfb0a7b80c55120cdd89`; adiciona apenas um passo de regressão TASK-003 à CI.
 
-## Implementação registrada
+## Implementação e validação
 
-- Migration aditiva `202611020001_task009_order_lifecycle.sql`: agenda de retirada; classificação e estado por linha; trilha de auditoria; retorno de estoque por item não usado; cancelamento; descarte de perecíveis; registro de defeito/avaria; agregação do estado terminal para pedidos mistos; alinhamento do cancelamento por expiração da reserva.
-- RPCs verificam papel no banco, exigem AAL2 e prova de MFA servidor dentro de cinco minutos para admin, bloqueiam transições inválidas e fazem mudanças de estoque/ledger/eventos dentro da mesma transação. A prova recente não é renovada por essas chamadas. Antes do preparo, todas as linhas abertas precisam estar classificadas; para marcar pronto, é exigida agenda futura. Cancelamento pago também é permitido antes do início do preparo, com acordo auditado. Replays de cancelamento, descarte, agenda, classificação e registro idempotente de ocorrência não repetem efeitos.
-- APIs administrativas aplicam same-origin, sessão, RBAC, MFA e validação de payload. Visitante recebe 401; papel inadequado recebe 403. Employee prepara, marca pronto e confirma retirada; ações exclusivas de admin continuam protegidas.
-- Painel administrativo permite agendar retirada, classificar linhas, registrar retirada, cancelar com confirmação auditada, devolver apenas quantidade não usada após o prazo e registrar defeito/avaria sem conteúdo de conversa. A página do cliente mostra agenda, status agregado e status de suas linhas.
-- Permanecem fora da implementação: cálculo/processamento de reembolso e envio automático de WhatsApp/e-mail.
-- CI preparada para executar migrations em projeto Supabase efêmero e testar TASK-009 sem aceitar skip. A imagem OCI utiliza lint direcionado TASK-009 na branch própria, seguindo o mecanismo já existente para TASK-007; os diagnósticos globais da TASK-003 não foram alterados nem suprimidos.
+A Etapa 004 implementa a agenda de retirada, classificação e estado por linha, auditoria, cancelamento com devolução seletiva, descarte de perecíveis, registro de defeito/avaria e estado terminal agregado de pedidos mistos. RPCs e APIs verificam RBAC, MFA recente, same-origin, idempotência e consistência transacional. Employee prepara, marca pronto e confirma retirada; ações exclusivas de admin permanecem protegidas. Reembolso e envio automático de mensagens permanecem fora do escopo.
 
-## Evidência de validação
-
-| Verificação | Resultado observado |
+| Verificação | Resultado |
 |---|---|
-| `npm run test:task009` | **PASS — 10/10, 0 falhas, 0 skips** (testes de payload, HTTP, same-origin, sessão, RBAC e MFA da rota) |
-| `npm run lint:task009` | **PASS — 14 arquivos, sem diagnósticos** |
-| `npm run typecheck` | **PASS** — `next typegen` gerou os tipos e `tsc --noEmit` concluiu sem erros |
-| `git diff --check` | **PASS** |
-| `npm run build` | **FAIL/BLOCKED** — repetido após remover `.next`; Turbopack não encontrou `next/package.json` dentro do root do worktree, pois a dependência compartilhada está fora dele |
-| `npx next build --webpack` | **FAIL/BLOCKED** — após a limpeza autorizada de `.next`, falhou com `EPERM` ao criar `.next/types/app/api/cart`; `node_modules/.cache` não existia |
-| Docker | **BLOCKED** — Docker Client 29.9.2 existe; Docker Engine Linux não respondeu pelo named pipe `dockerDesktopLinuxEngine` |
-| Supabase CLI | **BLOCKED** — `npx supabase --version` parou em `EPERM` ao gravar telemetria em `%USERPROFILE%\.supabase`; nenhuma stack ou migration foi iniciada |
-| `test:task009:integration` / migration | **NOT RUN** — requer Docker/Supabase isolado; CI foi preparada, mas não foi disparada nesta execução |
-| Parse automático do YAML da CI | **NOT RUN** — não há parser `yaml`/`js-yaml` nem `actionlint` disponível neste ambiente |
-| Lint global | **NOT RUN** — a validação desta TASK usa lint direcionado; diagnósticos globais preexistentes da TASK-003 permanecem sem alteração |
+| Integração Supabase TASK-009 | **PASS na CI 41757612439**: stack efêmera, migrations, testes de integração, guard TAP de zero testes/falhas/skips, lint direcionado e typecheck. O teste ampliado cobre rollback de cancelamento inválido, isolamento RLS entre clientes, evento de ocorrência idempotente e pedido misto até retirada. |
+| Lint, typecheck, build Next.js, imagem OCI e smoke `GET /auth` | **PASS na CI 41757612439**. O step de smoke iniciou a imagem e verificou HTTP 200. |
+| Regressões CI TASK-005 e TASK-006 | **PASS** na execução 41757612439. |
+| `npm run test:task009` | **PASS local — 10/10, 0 falhas, 0 skips**. |
+| `npm run lint:task009` | **PASS local — 14 arquivos, sem diagnósticos**. |
+| `npx tsc --noEmit` | **PASS local**. |
+| `npm run test:task009:integration` local | **NOT RUN/BLOCKED** — 1 teste foi ignorado pela ausência de credenciais/stack local; a validação integrada real passou na CI, cujo guard rejeita zero testes ou qualquer skip. |
+| Regressão TASK-003 `npm run test:auth` | **PASS — 3/3**. |
+| Regressão TASK-003 `npm run test:auth:supabase-mfa` | **BLOCKED localmente** — falhou na pré-condição `requires loopback Supabase URL`; não havia stack/URL local e nenhum fluxo MFA foi exercitado. Foi acrescentado à CI um passo que executa o teste contra a stack Supabase efêmera; esse passo está no commit local `43b5fea` e ainda aguarda push/execução. |
+| Regressão TASK-004 `npm run test:catalog` | **PASS — 19/19, 0 skips**. |
+| Regressões locais TASK-005 / TASK-006 | TASK-005 **4 PASS, 1 SKIP**; TASK-006 **5 PASS, 1 SKIP** por ausência de stack local. Integrações das duas passaram na CI 41757612439. |
+| Regressão TASK-007 `npm run test:task007` | **PASS — 14 PASS, 1 SKIP** por ausência de Supabase local, com `NODE_PATH` apontando a `node_modules/next/dist/compiled`. |
+| TASK-008 | `package.json` não define script de testes TASK-008. Suas migrations estão na sequência aplicada pelo job Supabase TASK-009 da CI. |
+| `git diff --check` | **PASS** após as alterações documentais. |
 
-## Pendências que bloqueiam o GATE-004
+## Escopo e evidências
 
-1. Aplicar a sequência completa de migrations em Supabase efêmero e obter PASS dos testes integrados de agenda, classificação, prova MFA recente no banco, retorno seletivo, idempotência, expiração e descarte.
-2. Executar a CI Linux preparada e confirmar PASS do job integrado, typecheck, lint direcionado e build/OCI.
-3. Resolver o ambiente de build do checkout dedicado: dependência Next.js ausente dentro do root do worktree e bloqueio `EPERM` na geração de `.next`, mesmo após limpeza autorizada.
+- Comparação da branch com a base `356ab80`: nenhum arquivo de código, teste ou migration da TASK-003 ou TASK-004 foi alterado. A única alteração de workflow desta revalidação acrescenta uma execução de regressão do teste MFA TASK-003 na stack já efêmera; não altera código da TASK-003.
+- O job e os passos do run 41757612439 aparecem como `success` na API pública do GitHub, incluindo `Testes Supabase TASK-009 (TAP e skip proibido)` e `Iniciar container e verificar endpoint TASK-009`. O workflow exige `# tests` maior que zero, `# fail 0`, nenhum skip e presença do teste principal. Os logs brutos dos jobs não estão acessíveis nesta sessão; não se registra saída detalhada além dos estados públicos dos passos e do predicado documentado no workflow.
+- Nenhuma stack local, volume ou dado persistente foi iniciado, parado, resetado ou removido. Foram usados dados sintéticos na CI.
 
-Nenhuma migration foi aplicada neste ambiente. Não há evidência para aprovar o GATE-004 ou habilitar a Etapa 005. A Etapa 006 e a TASK-010 não foram iniciadas.
-
-## Scope Guard
-
-- Arquivos funcionais alterados pertencem ao fluxo de agenda, retirada, cancelamento e acompanhamento da TASK-009, mais configuração/testes direcionados necessários à sua validação.
-- Nenhuma migration existente foi editada ou renomeada; nenhuma dependência foi adicionada.
-- Código, testes e migrations da TASK-003 e implementação/código da TASK-004 não foram alterados nesta implementação. Mudanças documentais anteriores no README/ADR/arquitetura e no fechamento TASK-006 foram solicitadas separadamente e permanecem no worktree.
-- Nenhum container, volume ou banco persistente foi iniciado, parado, resetado ou limpo. Sem commit, push ou deploy.
-
-## Gate
+## Resultado do gate
 
 ```text
 TASK: TASK-009
 Status da TASK: IN_REVIEW
 Etapa: 004 — Implementação
-Implementação de aplicação: concluída para validação
-STATUS DA ETAPA: BLOQUEADA
-GATE-004: BLOQUEADO
-Etapa 005: NÃO HABILITADA
-Motivo: validação integrada Supabase/CI e build OCI ainda sem evidência PASS.
+Branch/Commit validado: task/TASK-009-gestao-pedidos-retirada / d1f9c3ebe574b3bc9a5af033a5c71ef28fcbaa9d
+Primary Changes: ciclo de agenda, retirada, cancelamento e descarte por linha; migration/RPCs/API/UI TASK-009
+Incidental Changes: expansão de testes integrados TASK-009 e passo CI de regressão MFA TASK-003
+Tests/Gates: GATE-004 PASS; integração Supabase, testes TASK-009, lint, typecheck, build, imagem OCI e smoke HTTP PASS na CI 41757612439; teste local de MFA Supabase TASK-003 BLOCKED por ausência de URL loopback, regressão remota adicionada mas ainda sem execução
+Scope Guard: PASS — TASK-003 e TASK-004 sem alterações funcionais; alteração de workflow limitada à regressão sintética
+Definition of Done da Etapa 004: PASS
+Next Eligible: Etapa 005 — HABILITADA; não executada nesta revalidação
+```
+
+```text
+GATE-004: CONCLUÍDO/APROVADO
+Evidência principal: CI 41757612439, commit d1f9c3ebe574b3bc9a5af033a5c71ef28fcbaa9d
+Etapa 005: HABILITADA PARA EXECUÇÃO FUTURA; NÃO INICIADA
+Ressalva independente: a regressão TASK-003 MFA ainda aguarda publicação e execução do commit local 43b5fea.
 ```
