@@ -124,11 +124,11 @@ test("TASK-010: outbox transacional, RLS, reagendamento e corrida de cancelament
   assert.ok(anonymousClaim.error);
 
   const logs: unknown[] = [];
-  const sent: Array<{ to: string; text: string; idempotencyKey: string }> = [];
+  const sent: Array<{ to: string; subject: string; text: string; idempotencyKey: string }> = [];
   const result = await runNotificationCycle(
     admin,
     {
-      async send(message: { to: string; text: string; idempotencyKey: string }) {
+      async send(message: { to: string; subject: string; text: string; idempotencyKey: string }) {
         sent.push(message);
         return { accepted: true, providerMessageId: `synthetic-${randomUUID()}` };
       },
@@ -144,7 +144,8 @@ test("TASK-010: outbox transacional, RLS, reagendamento e corrida de cancelament
   assert.equal(result.sent, 1);
   assert.equal(sent.length, 1);
   assert.match(sent[0].to, /\.invalid$/);
-  assert.match(sent[0].text, /Order received/);
+  assert.match(sent[0].subject, /Order received/);
+  assert.match(sent[0].text, /We received your order/);
   assert.doesNotMatch(JSON.stringify(logs), /customer@example|task010-[^" ]+@example\.invalid/);
   const sentRow = await admin
     .from("notification_outbox")
