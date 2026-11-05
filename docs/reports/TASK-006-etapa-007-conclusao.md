@@ -13,7 +13,7 @@
 - Relatórios TASK-006 das Etapas 001–006 e o roteiro T001–T011.
 - Estado Git: branch e HEAD acima; o status já continha alterações locais de implementação antes desta etapa.
 
-O prompt oficial determina que a Etapa 007 fecha o gate, mas não conclui a TASK nem inicia uma tarefa posterior. A TASK-006 fica em `IN_REVIEW`, sem marcação `DONE`.
+Na execução original, o prompt da Etapa 007 limitava a ação ao fechamento do gate. Em 2026-10-29, a solicitante autorizou explicitamente concluir a TASK-006 após a aprovação dos sete gates. Essa autorização posterior prevalece para o estado final registrado neste relatório: TASK-006 `DONE`. Nenhuma tarefa posterior foi iniciada por aquela etapa.
 
 ## Matriz acumulada de gates
 
@@ -50,7 +50,7 @@ O prompt oficial determina que a Etapa 007 fecha o gate, mas não conclui a TASK
 
 - **Etapa 007:** APROVADA.
 - **GATE-007:** CONCLUÍDO.
-- **TASK-006:** IN_REVIEW; esta etapa não marca a TASK como DONE, conforme o prompt oficial.
+- **TASK-006:** DONE por autorização explícita posterior da solicitante, após GATE-001–007 aprovados.
 - **Próxima etapa/TASK:** nenhuma iniciada nem habilitada por esta execução. Aguardar revisão/ação explícita da usuária.
 
 ```text
@@ -69,7 +69,7 @@ PROBLEMAS ENCONTRADOS:
 - O relatório manual fornecido não informa project_id/identificador da stack nem contém capturas brutas; resultados T001–T011 permanecem atribuídos à usuária.
 CORREÇÕES REALIZADAS:
 - Consolidado o estado dos sete gates e a conclusão da Etapa 007 em documentação.
-- Atualizado TASKS.md para IN_REVIEW e GATE-007 concluído.
+- Atualizado TASKS.md para DONE por autorização posterior explícita da solicitante; GATE-007 concluído.
 - Corrigido o carimbo de data/hora documental da Etapa 006 para o fuso local/UTC correspondente.
 - Corrigido o carimbo de auditoria da Etapa 006 para o fuso America/Sao_Paulo e UTC correspondentes.
 PENDÊNCIAS:

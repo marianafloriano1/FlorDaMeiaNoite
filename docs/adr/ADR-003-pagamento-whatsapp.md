@@ -2,7 +2,7 @@
 
 - **Status:** ACEITO
 - **Data original:** 2026-09-23
-- **Emenda documental:** 2026-10-28
+- **Emenda documental:** 2026-10-28; 2026-11-02
 - **Rastreabilidade:** RF-007/009/013/020; RN-008/013; UC-03/04/05; TASK-005, TASK-006, TASK-009.
 
 ## Contexto
@@ -20,6 +20,10 @@ A TASK-005 é responsável pelo carrinho/favoritos e pela reserva temporária co
 - WHATSAPP_STORE_NUMBER é configuração de ambiente em formato E.164; o valor oficial será fornecido antes da implantação. Testes usam valor sintético.
 - ORDER_CANCELLATION_POLICY_TEXT é configuração com texto fornecido pela loja e exibido antes da confirmação de pagamento. O conteúdo legal continua pendente; não usar texto inventado nem calcular reembolso.
 - Se a reserva associada expirar, TASK-005 libera estoque uma vez. TASK-006 reconcilia o pedido sem duplicar a liberação e não pode estender o prazo da reserva.
+- A TASK-009 administra o ciclo posterior do pedido sem alterar a fronteira de reserva/checkout: admin define a data e hora combinadas de retirada e employee executa preparo, marca `ready_for_pickup` e confirma `picked_up`. Apenas admin cancela pedido; cancelamento de pedido pago exige registro auditável da confirmação do acordo do cliente, sem armazenar texto/conteúdo de WhatsApp. Nenhum reembolso é calculado ou processado no sistema.
+- Admin classifica manualmente cada linha de pedido como perecível ou não perecível. Linha perecível não retirada pode ser marcada `discarded` por admin depois de transcorridos três dias úteis da data combinada; para esta contagem, dias úteis são segunda a sábado e feriados não são excluídos. Linha descartada nunca retorna ao estoque.
+- Linha não perecível pode aguardar até sete dias corridos após a data combinada; depois desse prazo, admin pode cancelá-la. Cancelamentos e devoluções são controlados por linha: somente itens/linhas não usados podem retornar ao estoque, uma única vez; linhas usadas, retiradas ou descartadas nunca retornam. Em pedido misto, o pedido permanece não terminal até todas as linhas estarem retiradas, canceladas ou descartadas.
+- A TASK-009 registra estado e auditoria; não envia notificações automáticas. Notificações e tentativas automatizadas permanecem no escopo da TASK-010.
 
 ## Consequências
 
@@ -27,3 +31,4 @@ A TASK-005 é responsável pelo carrinho/favoritos e pela reserva temporária co
 - O worker da TASK-005 é a única autoridade de expiração/liberação de inventário reservado. TASK-006 audita estados do pedido em separado.
 - Número oficial e texto legal final são gates operacionais de implantação/pagamento, não defaults de desenvolvimento.
 - O sistema não codifica cálculo ou decisão legal de reembolso; a loja fornece o texto final antes de habilitar a confirmação de pagamento.
+- A classificação por linha e o acordo do cliente são registrados como decisões/ações administrativas com ator e timestamp de servidor; conteúdo da conversa, PII e mensagens completas não são persistidos.
