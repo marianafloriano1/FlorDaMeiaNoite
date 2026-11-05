@@ -33,6 +33,7 @@ jobs:
       - name: Instalar dependências do lockfile
         run: npm ci --no-audit --no-fund
 
+
       - name: Lint direcionado TASK-007
         if: startsWith(github.ref, 'refs/heads/task/TASK-007') || startsWith(github.head_ref, 'task/TASK-007')
         run: npm run lint:task007
@@ -41,8 +42,12 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
         run: npm run lint:task009
 
+      - name: Lint direcionado TASK-010
+        if: startsWith(github.ref, 'refs/heads/task/TASK-010') || startsWith(github.head_ref, 'task/TASK-010')
+        run: npm run lint:task010
+
       - name: Lint global
-        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') }}
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') && !startsWith(github.ref, 'refs/heads/task/TASK-010') && !startsWith(github.head_ref, 'task/TASK-010') }}
         run: npm run lint
 
       - name: Verificar tipos
@@ -58,6 +63,14 @@ jobs:
       - name: Construir imagem do container TASK-009
         if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
         run: docker build --pull --build-arg TASK009_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
+
+      - name: Construir imagem da aplicação TASK-010
+        if: startsWith(github.ref, 'refs/heads/task/TASK-010') || startsWith(github.head_ref, 'task/TASK-010')
+        run: docker build --pull --build-arg TASK010_LINT_SCOPE=1 --tag flor-da-meia-noite:${{ github.sha }} .
+
+      - name: Construir imagem do worker TASK-010
+        if: startsWith(github.ref, 'refs/heads/task/TASK-010') || startsWith(github.head_ref, 'task/TASK-010')
+        run: docker build --pull --build-arg TASK010_LINT_SCOPE=1 --target task010-notification-worker --tag flor-da-meia-noite-task010-worker:${{ github.sha }} .
 
       - name: Iniciar container e verificar endpoint TASK-009
         if: startsWith(github.ref, 'refs/heads/task/TASK-009') || startsWith(github.head_ref, 'task/TASK-009')
@@ -91,7 +104,7 @@ jobs:
           exit 1
 
       - name: Construir imagem do container
-        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') }}
+        if: ${{ !startsWith(github.ref, 'refs/heads/task/TASK-007') && !startsWith(github.head_ref, 'task/TASK-007') && !startsWith(github.ref, 'refs/heads/task/TASK-009') && !startsWith(github.head_ref, 'task/TASK-009') && !startsWith(github.ref, 'refs/heads/task/TASK-010') && !startsWith(github.head_ref, 'task/TASK-010') }}
         run: docker build --pull --tag flor-da-meia-noite:${{ github.sha }} .
 
   task006-integration:
@@ -517,4 +530,162 @@ jobs:
             supabase stop --workdir "$TASK009_SUPABASE_WORKDIR" --no-backup
           else
             echo "Stack Supabase TASK-009 não foi preparada; nada a encerrar."
+          fi
+
+  task010-integration:
+    name: TASK-010 Supabase integration
+    if: startsWith(github.ref, 'refs/heads/task/TASK-010') || startsWith(github.head_ref, 'task/TASK-010')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v7.0.1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.22.1
+          cache: npm
+
+      - name: Instalar dependências do lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Construir imagem do worker TASK-010 para smoke test
+        run: docker build --pull --target task010-notification-worker --tag flor-da-meia-noite-task010-worker:${{ github.sha }} .
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+
+      - name: Preparar projeto Supabase efêmero
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/task010-supabase"
+          mkdir -p "$workdir"
+          cp -R supabase "$workdir/supabase"
+          project_id="task010-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sed -i -E "s/^project_id = .*/project_id = \"$project_id\"/" "$workdir/supabase/config.toml"
+          echo "TASK010_SUPABASE_WORKDIR=$workdir" >> "$GITHUB_ENV"
+
+      - name: Iniciar stack efêmera e aplicar migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase start --workdir "$TASK010_SUPABASE_WORKDIR"
+          supabase migration up --local --workdir "$TASK010_SUPABASE_WORKDIR"
+
+      - name: Exportar credenciais locais sintéticas para regressão
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(supabase status --workdir "$TASK010_SUPABASE_WORKDIR" -o env)"
+          value() {
+            printf '%s\n' "$status" | sed -n "s/^$1=//p" | head -n 1 | tr -d '"'
+          }
+          api_url="$(value API_URL)"
+          anon_key="$(value ANON_KEY)"
+          service_role_key="$(value SERVICE_ROLE_KEY)"
+          test -n "$api_url"
+          test -n "$anon_key"
+          test -n "$service_role_key"
+          [[ "$api_url" == http://127.0.0.1:* || "$api_url" == http://localhost:* ]]
+          echo "::add-mask::$anon_key"
+          echo "::add-mask::$service_role_key"
+          {
+            printf 'TASK010_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK010_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK010_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'TASK005_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK005_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK005_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'TASK006_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK006_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK006_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'TASK007_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK007_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK007_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'TASK007_REQUIRE_SUPABASE=1\n'
+            printf 'TASK009_TEST_SUPABASE_URL=%s\n' "$api_url"
+            printf 'TASK009_TEST_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'TASK009_TEST_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n' "$api_url"
+            printf 'NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$anon_key"
+            printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+          } >> "$GITHUB_ENV"
+
+      - name: Regressão unitária das tarefas anteriores
+        run: |
+          npm run test:auth
+          npm run test:catalog
+          npm run test:task005
+          npm run test:task006
+          npm run test:task007
+          npm run test:task009
+          npm run test:auth:supabase-mfa
+          npm run test:task009:integration
+
+      - name: Testes unitários TASK-010 sem skips
+        run: npm run test:task010
+
+      - name: Teste integrado TASK-010 (TAP, zero skips)
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/task010-integration.log"
+          set +e
+          node --import=tsx --test --test-reporter=tap tests/task010/notifications.integration.test.ts 2>&1 | tee "$log"
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" -eq 0
+          grep -Eq '^# tests 1$' "$log"
+          grep -Eq '^# pass 1$' "$log"
+          grep -Eq '^# fail 0$' "$log"
+          if grep -Eq '^# skipped [1-9][0-9]*$|^# SKIP' "$log"; then
+            echo 'TASK-010 Supabase integration must not be skipped.' >&2
+            exit 1
+          fi
+          grep -Fq 'ok 1 - TASK-010: outbox transacional, RLS, reagendamento e corrida de cancelamento' "$log"
+
+      - name: Lint direcionado TASK-010
+        run: npm run lint:task010
+
+      - name: Verificar tipos
+        run: npm run typecheck
+
+      - name: Smoke test do worker OCI com canal desabilitado
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="task010-worker-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          worker_url="${TASK010_TEST_SUPABASE_URL/http:\/\/127.0.0.1/http:\/\/host.docker.internal}"
+          docker run --detach --name "$container" --add-host host.docker.internal:host-gateway \
+            --env "NEXT_PUBLIC_SUPABASE_URL=$worker_url" \
+            --env "SUPABASE_SERVICE_ROLE_KEY=$TASK010_TEST_SUPABASE_SERVICE_ROLE_KEY" \
+            --env NOTIFICATION_WORKER_POLL_INTERVAL_MS=1000 \
+            "flor-da-meia-noite-task010-worker:${GITHUB_SHA}"
+          sleep 3
+          running="$(docker inspect --format '{{.State.Running}}' "$container")"
+          if [ "$running" != "true" ]; then
+            docker logs --tail 80 "$container" || true
+            echo 'TASK-010 worker container exited before completing its idle cycle.' >&2
+            exit 1
+          fi
+          if docker logs "$container" 2>&1 | grep -q 'transactional_notification_cycle_failed'; then
+            docker logs --tail 80 "$container" || true
+            exit 1
+          fi
+
+      - name: Encerrar stack Supabase efêmera TASK-010
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${TASK010_SUPABASE_WORKDIR:-}" ]]; then
+            supabase stop --workdir "$TASK010_SUPABASE_WORKDIR" --no-backup
+          else
+            echo "Stack Supabase TASK-010 não foi preparada; nada a encerrar."
           fi

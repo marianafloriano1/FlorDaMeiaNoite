@@ -13,8 +13,10 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 ARG TASK007_LINT_SCOPE=0
 ARG TASK009_LINT_SCOPE=0
+ARG TASK010_LINT_SCOPE=0
 RUN if [ "$TASK007_LINT_SCOPE" = "1" ]; then npm run lint:task007; \
     elif [ "$TASK009_LINT_SCOPE" = "1" ]; then npm run lint:task009; \
+    elif [ "$TASK010_LINT_SCOPE" = "1" ]; then npm run lint:task010; \
     else npm run lint; fi \
     && npm run typecheck \
     && npm run build
@@ -35,3 +37,17 @@ COPY --from=build --chown=app:app /app/src/workers/catalog-stock-alerts.mjs ./sr
 USER app
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+FROM base AS task010-worker-dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+
+FROM base AS task010-notification-worker
+ENV NODE_ENV=production
+RUN groupadd --system --gid 1001 app \
+    && useradd --system --uid 1001 --gid app app
+COPY --from=task010-worker-dependencies --chown=app:app /app/node_modules ./node_modules
+COPY --chown=app:app src/lib/notifications ./src/lib/notifications
+COPY --chown=app:app src/workers/transactional-notifications.mjs ./src/workers/transactional-notifications.mjs
+USER app
+CMD ["node", "src/workers/transactional-notifications.mjs"]

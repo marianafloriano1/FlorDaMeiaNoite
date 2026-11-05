@@ -28,10 +28,18 @@ Mailpit é o destino para testes locais e não envia mensagens externas.
   aplicáveis à operação da loja.
 - Lembretes programados para uma data não permitida por feriado devem ser suspensos
   e reagendados para o próximo dia permitido.
+- Se o reagendamento de um lembrete T-24h/T-1h ficar depois do horário previsto da
+  retirada, suprimir esse lembrete por obsolescência.
 - A regra deve consultar o calendário configurado, não uma lista fixa embutida no
   código nem uma fonte externa presumida como oficial.
+- Alertas diários de itens perecíveis começam na data prevista de retirada e cobrem
+  três dias úteis. Para notificações, dia útil significa segunda a sexta, excluindo
+  feriados ativos no calendário; o horário local da retirada é preservado. Se a data
+  prevista cair em fim de semana ou feriado ativo, o alerta é agendado para o próximo
+  dia permitido. Lembretes coincidentes do mesmo pedido/data são agrupados.
 - Esta política rege notificações. Ela não altera a regra da TASK-009 para contagem
-  do prazo de descarte de perecíveis.
+  do prazo de descarte de perecíveis, que permanece segunda a sábado sem excluir
+  feriados.
 
 ### 2.2 Remetente
 
