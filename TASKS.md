@@ -221,15 +221,18 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-010 — Verificação e notificações agendadas
 
-- **Status:** BLOCKED | **DEPENDS_ON:** TASK-003, TASK-006, TASK-009 | **Rastreabilidade:** RF-004/012; RN-003/011/012; RNF-008/009; UC-02/06.
+- **Status:** READY | **Branch:** `task/TASK-010-verificacao-notificacoes` | **DEPENDS_ON:** TASK-003, TASK-006, TASK-009 | **Rastreabilidade:** RF-004/012; RN-003/011/012; RNF-008/009; UC-02/06.
 - **Objetivo:** envio confiável de mensagens de verificação, status, retirada e alertas de prazo.
-- **Allowed Changes:** modelo Notification/outbox, workers, templates pt/en/es/ru, e-mail/SMS provider adapters.
+- **Allowed Changes:** modelo Notification/outbox, workers, templates pt/en/es/ru e adapters de e-mail transacional.
 - **Incidental:** monitor de falhas e reprocessamento.
-- **Forbidden:** enviar marketing sem consentimento; duplicar mensagens em retries; mandar OTP/logs ao painel aberto; notificar clientes após cancelamento indevidamente.
-- **Aceite:** verificação email/SMS; senha por email; e-mail pronto; lembretes T-24h/T-1h; avisos diários para perecíveis até três dias úteis; disponibilidade de canal/retry registrada; feriado respeitado.
-- **Pendências:** escolher serviços, remetente/domínio, calendário de feriados e limites/custos.
+- **Forbidden:** enviar marketing sem consentimento; duplicar mensagens em retries; mandar OTP/logs ao painel aberto; notificar clientes após cancelamento indevidamente; duplicar os fluxos do Supabase Auth; usar SMS fora da autenticação sem aprovação explícita.
+- **Aceite:** verificação de conta e recuperação de senha pelo Supabase Auth/TASK-003; e-mail transacional de pedido e status; lembretes T-24h/T-1h; avisos diários para perecíveis até três dias úteis; envio idempotente e rastreável, com disponibilidade de canal/retry registrada; calendário de feriados respeitado. SMS permanece restrito à autenticação.
+- **Decisões aprovadas (2026-11-04):** (1) calendário de feriados editável, com reagendamento dos lembretes para o próximo dia permitido; (2) identidade oficial da loja como remetente, com endereço e domínio reais fornecidos depois; (3) arquitetura de e-mail independente de fornecedor, com adapter, escolha posterior do provedor e Mailpit nos testes locais; (4) limites operacionais configuráveis, sem valores arbitrários; (5) teto de gastos e alertas antes de habilitar cobrança; (6) retenção separada e descarte seguro dos dados.
+- **Parâmetros futuros:** fornecedor, endereço/domínio reais, valores de limites/orçamento/alertas e prazos concretos de retenção. Não inventar valores nem ativar envio pago sem os controles aprovados.
 - **Validação:** relógio simulado, retries, duplicidade, opt-out aplicável e falha de provedor.
 - **DoD:** outbox/job idempotente; entrega/erro observável sem expor dados privados.
+- **Etapa 001 — Recontextualização (2026-11-04):** GATE-001 CONCLUÍDO; fontes, estado e lacunas em `docs/reports/TASK-010-etapa-001-recontextualizacao-2026-11-04.md`. As lacunas registradas ali foram resolvidas na Etapa 002. Nenhum teste ou implementação executado.
+- **Etapa 002 — Pré-condições (2026-11-04):** GATE-002 CONCLUÍDO/APROVADO. TASK-003, TASK-006 e TASK-009 `DONE`; commit documental da TASK-009 `e7fb9d81a5c43f0869b489eb4ad47293634eec5e` integrado pelo commit `09aab5080ff2f6dbae192c926402e9a6ca479809`, ancestralidade confirmada. Evidências e DoR em `docs/reports/TASK-010-etapa-002-pre-condicoes.md`; arquitetura em `docs/architecture/TASK-010-notificacoes.md`. Etapa 003 (Planejamento) habilitada, ainda não iniciada. Nenhum teste funcional ou serviço externo executado.
 
 ## TASK-011 — Relatórios, exportações e métricas
 
@@ -430,5 +433,4 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - GATE-001 a GATE-007: CONCLUÍDOS; 7/7 gates, sem pendências ou bloqueios obrigatórios. T001–T011 PASS; migration 202610250002 aplicada e validada na stack isolada, com fixtures sintéticas revertidas em transação. Relatório: docs/reports/TASK-004-etapa-007-conclusao.md.
 - TASK-004: DONE. Provider/quota/cobrança de tradução permanecem desativados; quatro diagnósticos globais preexistentes TASK-003 continuam sem alteração e fora do escopo aceito. P2 de imagem local/Storage documentados como não bloqueantes.
 - Nenhum código funcional ou arquivo da TASK-003 alterado nesta etapa. Próxima candidata TASK-005 não iniciada; autorização e DoR próprios requeridos. Checkout sem .git; nenhuma operação de Git executada.
-
 
