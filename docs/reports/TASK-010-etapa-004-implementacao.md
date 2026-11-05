@@ -34,13 +34,26 @@ Os SKIPs das integrações TASK-005/006/007 não são tratados como aprovação.
 
 ## CI e evidência pendente
 
-Inspeção do workflow confirmou que `task010-integration` é acionado em branches `task/TASK-010*`, copia `supabase/` para `$RUNNER_TEMP`, define `project_id` exclusivo por execução, inicia a stack local efêmera, executa `supabase migration up --local`, exporta URL/chaves emitidas pela stack e executa `tests/task010/notifications.integration.test.ts`. O shell exige exatamente 1 teste, 1 PASS, 0 FAIL, nenhum SKIP e o título da suíte; também há lint direcionado, typecheck, build da imagem do worker e smoke test.
+A execução GitHub Actions `42087756954` (commit `78bf5b11d92f4b328cce64aed90d8cc048d60a93`) confirmou a inicialização da stack Supabase efêmera e a aplicação das migrations sem erro. O teste integrado TASK-010 falhou, sem SKIP: em `tests/task010/notifications.integration.test.ts:144`, esperava-se 1 mensagem enviada, mas o worker enviou 6 (`6 !== 1`). O lint/typecheck e o smoke OCI seguintes foram ignorados por dependerem do sucesso desse teste; a construção da imagem OCI do worker passou.
 
-O job ainda não foi executado nesta revisão. Portanto, a aplicação real da migration, os testes Supabase e o smoke OCI permanecem **PENDENTES**. O build local PASS não substitui essas evidências. A validação automatizada de sintaxe YAML não pôde ser executada: não há parser YAML nem `actionlint` instalado no ambiente; o bloco foi inspecionado estruturalmente. O próprio runner do GitHub fará a validação definitiva ao iniciar o workflow.
+Diagnóstico: o job executava `npm run test:task009:integration` antes do teste TASK-010, usando o mesmo banco efêmero. Essa integração cria pedidos sintéticos que deixam notificações elegíveis no outbox global; `runNotificationCycle` processa corretamente toda a fila elegível, então a contagem total não era isolada para o pedido recém-criado pelo teste. A asserção de uma mensagem é válida para uma fila limpa, mas a ordem do job contaminava esse pré-requisito.
+
+Correção aplicada somente ao workflow: o teste integrado TASK-010 agora roda após os testes unitários TASK-010 e antes das regressões integradas das tarefas anteriores. Assim, a stack recém-migrada contém apenas o pedido criado pelo próprio teste quando ele verifica a primeira entrega. Nenhuma asserção foi removida ou afrouxada e nenhum código funcional, migration, seed ou dado persistente foi alterado.
+
+A correção precisa de uma nova execução real do job para validar o resultado integrado e permitir que lint/typecheck e smoke OCI sejam executados após ele. Até essa evidência, migration: PASS na execução anterior; integração: FAIL na execução anterior e aguardando reexecução após a correção; smoke OCI: NOT RUN (etapa seguinte foi pulada). O GATE-004 permanece PENDENTE. A sintaxe do YAML foi revisada estruturalmente, mas não foi possível executar `actionlint` ou um parser YAML local.
+
+## Revalidação local do commit `78bf5b1` — 2026-11-05
+
+- `npm run test:task010`: PASS — 18/18, zero skips.
+- `npm run lint:task010`: PASS.
+- `npm run typecheck`: PASS.
+- `npm run build`: PASS — Next.js compilou, TypeScript passou e 22 páginas estáticas foram geradas.
+- A execução Actions `42087756954` foi localizada na página autenticada do job. O teste integrado falhou pela contaminação da fila descrita acima; a migration foi aplicada e a imagem do worker foi construída. O smoke OCI não rodou porque o teste integrado falhou. O workflow foi reordenado localmente; ainda falta uma nova execução da CI sobre essa alteração.
+- `git diff --check`: PASS. Os únicos itens locais não rastreados são dois backups `ci.yml.bak-task010*`; foram preservados sem alteração.
 
 ## Gate
 
 - **GATE-004:** PENDENTE — aguarda CI verde, com migration aplicada na stack efêmera e integração TASK-010 1/1 PASS, zero skips, além do smoke OCI do worker.
 - **Etapa 005:** não iniciada e não habilitada até o GATE-004 ser aprovado.
 - Nenhum arquivo funcional de TASK-003, TASK-004, TASK-006 ou TASK-009 foi alterado. Alterações de workflow, dependência SMTP, Docker, README/TASKS e documentação são compartilhadas ou específicas da TASK-010 conforme escopo.
-- Nenhum commit, push, merge, deploy, reset ou limpeza foi executado.
+- A implementação está registrada em `78bf5b1`. Nesta revalidação não houve merge, deploy, reset, limpeza ou alteração dos backups não rastreados.

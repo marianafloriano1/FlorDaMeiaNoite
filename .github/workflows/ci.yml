@@ -615,17 +615,6 @@ jobs:
             printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
           } >> "$GITHUB_ENV"
 
-      - name: Regressão unitária das tarefas anteriores
-        run: |
-          npm run test:auth
-          npm run test:catalog
-          npm run test:task005
-          npm run test:task006
-          npm run test:task007
-          npm run test:task009
-          npm run test:auth:supabase-mfa
-          npm run test:task009:integration
-
       - name: Testes unitários TASK-010 sem skips
         run: npm run test:task010
 
@@ -647,6 +636,17 @@ jobs:
             exit 1
           fi
           grep -Fq 'ok 1 - TASK-010: outbox transacional, RLS, reagendamento e corrida de cancelamento' "$log"
+
+      - name: Regressão unitária das tarefas anteriores
+        run: |
+          npm run test:auth
+          npm run test:catalog
+          npm run test:task005
+          npm run test:task006
+          npm run test:task007
+          npm run test:task009
+          npm run test:auth:supabase-mfa
+          npm run test:task009:integration
 
       - name: Lint direcionado TASK-010
         run: npm run lint:task010
