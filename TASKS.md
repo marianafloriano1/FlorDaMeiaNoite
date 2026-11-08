@@ -190,7 +190,7 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - **Etapa 007 — Conclusão (2026-10-29):** GATE-007 APROVADO; relatório `docs/reports/TASK-007-etapa-007-conclusao.md`. GATE-001–007 concluídos; TASK-007 marcada DONE. T001–T012 do GATE-006 foram aceitos conforme resultados reportados pela operadora, sem reexecução pelo Codex. Sem alteração funcional nesta etapa; TASK-003/004 preservadas. Ressalvas não bloqueantes: 49 diagnósticos de lint global fora do escopo com lint direcionado PASS; envio real de e-mail e CI remota NOT RUN, registrados como pré-implantação/fora da validação local. Alterações da tarefa permanecem no working tree sem commit; nenhum push/deploy. Nenhuma tarefa posterior iniciada.
 ## TASK-008 — Cupons e indicadores de carrinho/favoritos
 
-- **Status:** IN_REVIEW | **Branch:** `task/TASK-008-cupons-cart-events` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-006/015/018; RN-006/017; UC-03/08.
+- **Status:** DONE | **Branch:** `task/TASK-008-cupons-cart-events` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-006/015/018; RN-006/017; UC-03/08.
 - **Objetivo:** administrar cupons e aplicar descontos válidos; registrar eventos de carrinho/favoritos para relatório. TASK-008 captura `CartEvent`; TASK-011 agrega e apresenta as métricas de RF-018.
 - **Allowed Changes:** Coupon/Redemption/CartEvent; painel do administrador; validação no backend.
 - **Incidental:** ferramenta de expiração dos cupons.
@@ -208,6 +208,7 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 - **Reavaliações intermediárias (2026-10-30):** análises anteriores registraram bloqueio/3 de 14 com base em anexos parciais. Essas conclusões foram supersedidas pela declaração formal final da usuária e pelo adendo de 14/14 reportados acima.
 - **Etapa 007 — Conclusão (2026-10-30):** GATE-007 CONCLUÍDO/APROVADO; matriz final GATE-001–007: 7 concluídos, 0 pendentes, 0 bloqueados. Relatório `docs/reports/TASK-008-etapa-007-conclusao.md`. Etapa 007 alterou somente documentação; `git diff --check` PASS; testes anteriores reutilizados conforme os relatórios, sem reexecução. TASK-008 permanece IN_REVIEW porque o prompt da Etapa 007 determina que esta etapa não conclui a TASK. Nenhuma TASK posterior iniciada, commit, push ou deploy realizado.
+- **Fechamento documental autorizado (2026-11-08):** por autorização explícita da solicitante, TASK-008 transicionada de IN_REVIEW para DONE após conferência dos gates 001–007 CONCLUÍDOS/APROVADOS, DoD, rastreabilidade e dependências TASK-003/TASK-005 DONE. As evidências automatizadas e os T001–T014 reportados pela operadora foram reaproveitados conforme seus relatórios, sem repetição de testes. O registro da Etapa 007 que mantinha IN_REVIEW é histórico e fica supersedido por esta decisão. TASK-011 permanece BLOCKED por suas decisões próprias, embora a dependência TASK-008 agora esteja DONE. Relatório complementar: `docs/reports/TASK-008-etapa-007-conclusao.md`. Nenhum código ou teste de outra TASK foi alterado; sem operação Git destrutiva, push ou deploy. O commit local autorizado contém somente os dois documentos desta conclusão.
 
 ## TASK-009 — Gestão de pedido, retirada e cancelamentos
 
