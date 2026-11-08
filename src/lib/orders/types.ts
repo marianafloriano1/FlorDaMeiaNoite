@@ -29,6 +29,13 @@ export type OrderQuote = {
   reservation_id: string;
   items: OrderQuoteLine[];
   total_brl: number;
+  subtotal_brl?: number;
+  coupon?: {
+    code: string;
+    eligible_subtotal_brl: number;
+    discount_brl: number;
+    total_brl: number;
+  } | null;
   price_changed: boolean;
   expires_at: string;
 };
@@ -39,6 +46,9 @@ export type CreatedOrder = {
   reservation_id: string;
   status: OrderStatus;
   total_brl: number;
+  subtotal_brl?: number;
+  discount_brl?: number;
+  coupon_code?: string | null;
   items: OrderQuoteLine[];
   idempotent_replay?: boolean;
 };

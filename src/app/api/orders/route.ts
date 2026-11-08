@@ -39,12 +39,9 @@ export async function POST(request: Request) {
   if (identity?.role !== "customer") return json({ error: "authentication_required" }, 401);
   const input = parseCreateOrderInput(await request.json().catch(() => null));
   if (!input) return json({ error: "invalid_order_request" }, 400);
-  const phone = process.env.WHATSAPP_STORE_NUMBER;
-  if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone))
-    return json({ error: "whatsapp_not_configured" }, 503);
   try {
     const supabase = await getSupabaseServerClient();
-    const { data, error } = await supabase.rpc("create_order_from_quote", {
+    const { data, error } = await supabase.rpc("create_order_from_quote_with_coupon", {
       p_quote_id: input.quoteId,
       p_idempotency_key: input.idempotencyKey,
       p_consent: input.consent,
@@ -58,11 +55,17 @@ export async function POST(request: Request) {
         return json({ error: "order_quote_expired" }, 409);
       if (error.message.includes("order_idempotency_key_reused"))
         return json({ error: "idempotency_key_reused" }, 409);
+      if (error.message.includes("coupon_"))
+        return json({ error: "coupon_unavailable_or_changed" }, 409);
       return json({ error: "order_create_failed" }, 503);
     }
     const order = data as CreatedOrder;
-    const whatsappUrl = buildWhatsAppOrderLink(order, new URL(request.url).origin);
-    if (!whatsappUrl) return json({ error: "whatsapp_not_configured" }, 503);
+    let whatsappUrl: string | null = null;
+    try {
+      whatsappUrl = buildWhatsAppOrderLink(order, new URL(request.url).origin);
+    } catch {
+      // WhatsApp is optional and runs after the order has been persisted.
+    }
     return json({ order, whatsappUrl }, order.idempotent_replay ? 200 : 201);
   } catch {
     return json({ error: "order_create_failed" }, 503);
