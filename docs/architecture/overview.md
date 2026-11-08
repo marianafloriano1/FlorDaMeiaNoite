@@ -45,6 +45,14 @@
 5. Após confirmação integral do pagamento, registrar preparation_window_start = payment_confirmed_at + 1 hora e preparation_window_end = payment_confirmed_at + 2 horas. Campos timestamptz em UTC e exibidos em America/Sao_Paulo.
 6. O cliente abre link wa.me para WHATSAPP_STORE_NUMBER. O rascunho contém referência opaca, resumo de itens, total autoritativo em BRL e link seguro de acompanhamento; a pessoa envia manualmente. Não há envio automatizado nem WhatsApp Business API.
 7. A autorização usa os papéis server-controlled existentes: employee (operador) e admin (gerente). Apenas admin/gerente confirma pagamento e cancela pedido.
+
+### Retirada, cancelamento e destino dos itens — TASK-009
+
+- Admin agenda a retirada após combinar com o cliente; employee executa o preparo, marca `ready_for_pickup` e registra `picked_up`. O cliente consulta a previsão e o histórico do próprio pedido.
+- Admin classifica cada linha de pedido como perecível ou não perecível. Linhas perecíveis não retiradas podem ser marcadas `discarded` pelo admin após três dias úteis desde a data combinada; para esta regra, contam-se segunda-feira a sábado e feriados não são excluídos. O descarte é por linha e nunca devolve estoque.
+- Linhas não perecíveis podem aguardar até sete dias corridos após a data combinada; após esse prazo, admin pode cancelar. Uma linha não usada pode retornar ao estoque uma única vez; linha usada, retirada ou descartada não retorna. Em pedido misto, nenhum status terminal do pedido é gravado enquanto houver linha não resolvida.
+- Cancelamento no sistema é exclusivo de admin. Para pedido pago, admin registra a confirmação do acordo do cliente em evento auditável com ator e timestamp de servidor; não se guarda conteúdo de WhatsApp. A aplicação não calcula nem executa reembolso.
+- Notificações e mensagens automáticas de prazo não pertencem à TASK-009; integram o escopo da TASK-010. A TASK-009 não envia mensagens WhatsApp.
 ## Segurança e privacidade
 
 - Supabase service role key fica exclusivamente no servidor; nunca usar prefixo `NEXT_PUBLIC_`.
