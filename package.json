@@ -19,7 +19,8 @@
     "test:task007": "node --conditions=react-server --experimental-test-module-mocks --import=tsx --import=./tests/task007/next-test-setup.mjs --test tests/task007/*.test.ts",
     "test:task008": "node --experimental-test-module-mocks --import=tsx --test tests/task008/*.test.ts",
     "test:task009": "node --conditions=react-server --experimental-test-module-mocks --import=tsx --import=./tests/task007/next-test-setup.mjs --test tests/task009/orders.validation.test.ts tests/task009/admin-routes.test.ts",
-    "test:task009:integration": "node --import=tsx --test tests/task009/*.integration.test.ts",    "test:task005": "node --import=tsx --test tests/task005/*.test.ts",
+    "test:task009:integration": "node --import=tsx --test tests/task009/*.integration.test.ts",
+    "test:task005": "node --import=tsx --test tests/task005/*.test.ts",
     "test:task006": "node --import=tsx --test tests/task006/*.test.ts",
     "worker:reservation-expiration": "node src/workers/reservation-expiration.mjs",
     "worker:catalog-stock-alerts": "node src/workers/catalog-stock-alerts.mjs",
@@ -27,19 +28,26 @@
     "lint": "biome check src tests/auth tests/catalog tests/translation next.config.ts",
     "lint:task007": "biome check src/app/admin/catalog src/app/api/admin/catalog src/lib/catalog/admin-authorization.ts src/lib/catalog/admin-service.ts src/lib/catalog/admin-validation.ts src/lib/catalog/authorization.ts src/lib/storage/catalog-image-validation.ts src/lib/storage/catalog-products.ts src/workers/catalog-stock-alerts.mjs tests/task007 package.json",
     "lint:task008": "biome check src/app/admin/coupons src/app/api/admin/coupons src/app/cart/page.tsx src/app/api/orders/quote/route.ts src/app/api/orders/route.ts src/lib/coupons src/lib/orders/types.ts src/lib/orders/validation.ts tests/task008 package.json",
-    "lint:task009": "biome check src/app/admin/orders src/app/orders src/app/api/admin/orders src/app/api/orders src/lib/orders tests/task009 package.json",    "format": "biome format --write src next.config.ts",
-    "typecheck": "next typegen && tsc --noEmit"
+    "lint:task009": "biome check src/app/admin/orders src/app/orders src/app/api/admin/orders src/app/api/orders src/lib/orders tests/task009 package.json",
+    "format": "biome format --write src next.config.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:task011": "node --conditions=react-server --experimental-test-module-mocks --import=tsx --test tests/task011/reports.test.ts tests/task011/reports.routes.test.ts",
+    "test:task011:integration": "node --conditions=react-server --import=tsx --test --test-reporter=tap tests/task011/reports.integration.test.ts",
+    "lint:task011": "biome check src/app/admin/reports src/app/api/admin/reports src/lib/reports tests/task011 package.json"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "exceljs": "^4.4.0",
     "next": "16.4.2",
+    "pdfkit": "^0.20.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
     "@types/node": "24.19.2",
+    "@types/pdfkit": "^0.17.7",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.3",
     "supabase": "^2.122.0",

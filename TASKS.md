@@ -243,18 +243,26 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-011 — Relatórios, exportações e métricas
 
-- **Status:** BLOCKED | **DEPENDS_ON:** TASK-005, TASK-007, TASK-008, TASK-009 | **Rastreabilidade:** RF-018; RN-017; RNF-006; UC-08.
+- **Status:** IN_PROGRESS | **Branch:** task/TASK-011-relatorios-exportacoes-metricas | **DEPENDS_ON:** TASK-005, TASK-007, TASK-008, TASK-009 | **Rastreabilidade:** RF-018; RN-017; RNF-006; UC-08.
 - **Objetivo:** relatórios semanais/mensais e exportações Excel/PDF disponíveis apenas ao administrador.
 - **Allowed Changes:** consultas agregadas, filtros, geração XLSX/PDF, registro de exportação.
 - **Incidental:** otimizações/índices locais ao relatório.
 - **Forbidden:** relatórios para equipe; exportações públicas; esconder cancelamentos; faturamento confundido com pedidos não pagos; incluir todos os dados pessoais sem necessidade.
-- **Aceite:** faturamento por data de criação e data de pagamento claramente separados; mais/menos vendidos, carrinho, favoritos; seletor Excel ou PDF; conteúdo consistente com filtros; somente administrador.
-- **Pendente:** definição de semana, tratamento de cupom/cancelamento no faturamento e escopo de PII exportada.
-- **Validação:** fixtures sintéticas contra totais calculados e autorização.
-- **DoD:** export temporário protegido e com auditoria; relatórios explicam base temporal.
+- **Aceite:** faturamento por data de criação e data de confirmação do pagamento separadas; rankings de produtos; métricas de carrinho/favoritos; Excel/PDF; conteúdo consistente com filtros; somente admin; exportações agregadas sem PII direta e com referência opaca apenas quando necessária.
+- **Decisões aprovadas pela solicitante:** semana de segunda a domingo em America/Sao_Paulo; faturamento somente de pagamentos confirmados, líquido do cupom, excluindo pedidos não pagos e cancelados antes do pagamento; cancelamentos pós-pagamento apresentados separadamente, sem presumir reembolso; exportações agregadas com referência opaca quando necessária e sem nome, contato, CPF ou endereço.
+- **Validação:** fixtures sintéticas contra totais calculados, filtros, formatos e autorização; regressão das dependências; integração em Supabase efêmero.
+- **DoD:** export temporário protegido e auditado; relatórios explicam bases temporais; evidências e limitações documentadas.
+- **Etapa 001 — Recontextualização:** GATE-001 APROVADO. Branch TASK-011 criada em c1cb4b8; integração da TASK-009 no commit fca96ed. Confirmações de ancestralidade e conflitos resolvidos em docs/reports/TASK-011-etapa-001-recontextualizacao.md.
+- **Etapa 002 — DoR:** GATE-002 APROVADO; dependências DONE e integradas, rastreabilidade e decisões aprovadas documentadas, ambiente de validação sintética disponível. Evidências em `docs/reports/TASK-011-etapa-002-pre-condicoes.md`.
+
+**TASK-011 — Estado das etapas:**
+
+- **Etapa 003 — Planejamento:** GATE-003 APROVADO; critérios, arquitetura, arquivos, sequência, testes, riscos e rollback registrados em `docs/reports/TASK-011-etapa-003-planejamento.md`. Etapa 004 iniciada.
+- **Etapa 004 — Implementação (2026-11-08):** implementação do painel admin, métricas agregadas, filtros de período, exportações XLSX/PDF e auditoria aditiva concluída. Testes direcionados 13/13 PASS/0 SKIP; lint direcionado, typecheck e build PASS. A integração Supabase real e aplicação da migration não foram executadas localmente porque Docker Engine está inacessível; workflow efêmero configurado, mas ainda sem resultado de CI. **GATE-004 = PENDENTE** até CI executar migrations e teste integrado sem SKIP. Relatório: `docs/reports/TASK-011-etapa-004-implementacao.md`.
+- **Etapa 005 — Revisão:** revisão estática sem achado P1/P2 funcional, mas GATE-005 permanece PENDENTE: integração do GATE-004 aguarda CI e `npm run test:task006` falhou na base integrada porque o teste espera `couponCode` ausente e o parser retorna `null`. Nenhum arquivo TASK-006 foi alterado; a falha está registrada para triagem na tarefa proprietária. Relatório: `docs/reports/TASK-011-etapa-005-revisao.md`.
+- **Etapa 006 — Testes manuais:** roteiro T001–T011 preparado em `docs/testing/TASK-011-etapa-006-testes-manuais.md`; testes manuais NOT RUN pelo Codex. GATE-006 não aprovado; aguarda gates anteriores e execução/evidências da operadora.
 
 ## TASK-012 — Direção visual, idiomas e acessibilidade
-
 - **Status:** BLOCKED | **DEPENDS_ON:** TASK-001, TASK-004 | **Rastreabilidade:** RF-001/019; RNF-002/007; UC-01; ADR-004.
 - **Objetivo:** aplicar identidade visual gótica/industrial e experiência não convencional sem comprometer compra acessível.
 - **Allowed Changes:** componentes/styles; tokens cor/tipografia; microinterações; layouts responsivos; seletor de idioma; conteúdo institucional configurável.
