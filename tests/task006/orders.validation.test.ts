@@ -11,7 +11,10 @@ const uuid = "8f8b289a-56ae-4aa2-9448-7c3c643c37e7";
 
 test("TASK-006 validation and WhatsApp link", async (t) => {
   await t.test("quote and create payloads require valid UUIDs and explicit consent", () => {
-    assert.deepEqual(parseOrderQuoteInput({ reservationId: uuid }), { reservationId: uuid });
+    assert.deepEqual(parseOrderQuoteInput({ reservationId: uuid }), {
+      reservationId: uuid,
+      couponCode: null,
+    });
     assert.equal(parseOrderQuoteInput({ reservationId: "bad" }), null);
     assert.equal(
       parseCreateOrderInput({ quoteId: uuid, idempotencyKey: uuid, consent: false }),

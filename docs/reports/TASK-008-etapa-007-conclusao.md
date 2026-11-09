@@ -59,3 +59,14 @@ PRÓXIMA ETAPA HABILITADA: NÃO
 MOTIVO: Etapa 007 é a última etapa da TASK-008 e não autoriza trabalho posterior.
 ==================================================
 ```
+
+## Adendo — fechamento documental autorizado em 2026-11-08
+
+A solicitante autorizou expressamente concluir a TASK-008 como DONE, reaproveitando as evidências existentes sem repetir testes. O histórico desta etapa registrava IN_REVIEW porque seu prompt determinava que a Etapa 007, isoladamente, não concluía a TASK; essa anotação descrevia o estado em 2026-10-30 e é supersedida por esta autorização e verificação final conforme `AGENTS.md`.
+
+- GATE-001 a GATE-007 permanecem CONCLUÍDOS/APROVADOS conforme matriz e relatórios acima.
+- Dependências TASK-003 e TASK-005 constam como DONE no `TASKS.md` deste checkout.
+- DoD da TASK-008 atendido conforme relatórios de implementação, revisão, testes manuais reportados pela operadora e conclusão; nenhuma falha funcional pendente consta nesses registros.
+- T001–T014 continuam caracterizados como execução/aprovação reportada pela operadora; não são atribuídos ao Codex nem reexecutados.
+- TASK-008: **DONE**. Próxima TASK elegível: **nenhuma iniciada**; TASK-011 permanece BLOCKED no registro de controle; seu estado e seus documentos próprios não foram alterados neste fechamento.
+- Esta atualização altera somente documentação/controle da TASK-008. O arquivo preexistente `tests/task006/orders.validation.test.ts` foi preservado. Sem operação Git destrutiva, push ou deploy; o commit local autorizado limita-se aos documentos TASK-008.

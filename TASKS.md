@@ -190,7 +190,7 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - **Etapa 007 — Conclusão (2026-10-29):** GATE-007 APROVADO; relatório `docs/reports/TASK-007-etapa-007-conclusao.md`. GATE-001–007 concluídos; TASK-007 marcada DONE. T001–T012 do GATE-006 foram aceitos conforme resultados reportados pela operadora, sem reexecução pelo Codex. Sem alteração funcional nesta etapa; TASK-003/004 preservadas. Ressalvas não bloqueantes: 49 diagnósticos de lint global fora do escopo com lint direcionado PASS; envio real de e-mail e CI remota NOT RUN, registrados como pré-implantação/fora da validação local. Alterações da tarefa permanecem no working tree sem commit; nenhum push/deploy. Nenhuma tarefa posterior iniciada.
 ## TASK-008 — Cupons e indicadores de carrinho/favoritos
 
-- **Status:** IN_REVIEW | **Branch:** `task/TASK-008-cupons-cart-events` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-006/015/018; RN-006/017; UC-03/08.
+- **Status:** DONE | **Branch:** `task/TASK-008-cupons-cart-events` | **DEPENDS_ON:** TASK-003, TASK-005 | **Rastreabilidade:** RF-006/015/018; RN-006/017; UC-03/08.
 - **Objetivo:** administrar cupons e aplicar descontos válidos; registrar eventos de carrinho/favoritos para relatório. TASK-008 captura `CartEvent`; TASK-011 agrega e apresenta as métricas de RF-018.
 - **Allowed Changes:** Coupon/Redemption/CartEvent; painel do administrador; validação no backend.
 - **Incidental:** ferramenta de expiração dos cupons.
@@ -208,10 +208,11 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 - **Reavaliações intermediárias (2026-10-30):** análises anteriores registraram bloqueio/3 de 14 com base em anexos parciais. Essas conclusões foram supersedidas pela declaração formal final da usuária e pelo adendo de 14/14 reportados acima.
 - **Etapa 007 — Conclusão (2026-10-30):** GATE-007 CONCLUÍDO/APROVADO; matriz final GATE-001–007: 7 concluídos, 0 pendentes, 0 bloqueados. Relatório `docs/reports/TASK-008-etapa-007-conclusao.md`. Etapa 007 alterou somente documentação; `git diff --check` PASS; testes anteriores reutilizados conforme os relatórios, sem reexecução. TASK-008 permanece IN_REVIEW porque o prompt da Etapa 007 determina que esta etapa não conclui a TASK. Nenhuma TASK posterior iniciada, commit, push ou deploy realizado.
+- **Fechamento documental autorizado (2026-11-08):** por autorização explícita da solicitante, TASK-008 transicionada de IN_REVIEW para DONE após conferência dos gates 001–007 CONCLUÍDOS/APROVADOS, DoD, rastreabilidade e dependências TASK-003/TASK-005 DONE. As evidências automatizadas e os T001–T014 reportados pela operadora foram reaproveitados conforme seus relatórios, sem repetição de testes. O registro da Etapa 007 que mantinha IN_REVIEW é histórico e fica supersedido por esta decisão. TASK-011 permanece BLOCKED por suas decisões próprias, embora a dependência TASK-008 agora esteja DONE. Relatório complementar: `docs/reports/TASK-008-etapa-007-conclusao.md`. Nenhum código ou teste de outra TASK foi alterado; sem operação Git destrutiva, push ou deploy. O commit local autorizado contém somente os dois documentos desta conclusão.
 
 ## TASK-009 — Gestão de pedido, retirada e cancelamentos
 
-- **Status:** IN_REVIEW | **Branch:** `task/TASK-009-gestao-pedidos-retirada` | **DEPENDS_ON:** TASK-006, TASK-007 | **Rastreabilidade:** RF-009..014/020; RN-008..014; RNF-010; UC-04/05/07; ADR-003.
+- **Status:** DONE | **Branch:** `task/TASK-009-gestao-pedidos-retirada` | **DEPENDS_ON:** TASK-006, TASK-007 | **Rastreabilidade:** RF-009..014/020; RN-008..014; RNF-010; UC-04/05/07; ADR-003.
 - **Objetivo:** concluir preparação/retirada, agenda, cancelamento e retorno seletivo de estoque.
 - **Allowed Changes:** Order status/pickup/cancellation; agenda e tela de pedidos; seleção de itens usados; confirmação de retirada; avisos de política.
 - **Incidental:** auditoria de decisões e timeline para cliente.
@@ -223,6 +224,8 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 - **Etapa 004 — Implementação (revalidação 2026-11-03):** CI `41757612439` PASS no commit `d1f9c3e`: integrações Supabase efêmeras TASK-005/006/009, migrations, testes TASK-009, lint direcionado, typecheck, build Next.js, imagem OCI e smoke `GET /auth` HTTP 200. Testes locais já registrados: TASK-009 10/10, catálogo 19/19, auth 3/3, typecheck/lint direcionados PASS; TASK-007 14 PASS/1 SKIP; TASK-005 4 PASS/1 SKIP e TASK-006 5 PASS/1 SKIP por ausência da stack local. A regressão MFA Supabase, indisponível localmente por falta de URL loopback, passou depois na CI efêmera 41759554315 e novamente na CI 41761635189. Relatório: `docs/reports/TASK-009-etapa-004-implementacao.md`.
 - **GATE-004:** CONCLUÍDO/APROVADO pela CI `41757612439`; Etapa 005 HABILITADA para execução futura, ainda não iniciada.
 - **Etapa 005 — Revisão (2026-11-03):** revisão e ausência de achados P1/P2 registradas em `docs/reports/TASK-009-etapa-005-revisao.md`. GATE-001 concluído por revalidação atual; relatório histórico original não recuperado. A regressão MFA passou sem skip na CI `41761635189` para o SHA publicado `8fea7b0df74c22076a42a74a1e3f86ea8f63a440`; o job TASK-009 também passou testes integrados, lint, typecheck e encerramento da stack efêmera. **GATE-005 CONCLUÍDO/APROVADO; Etapa 005 CONCLUÍDA; Etapa 006 HABILITADA, ainda não iniciada.** GATE-006 e GATE-007 continuam pendentes.
+- **Etapa 006 — Testes manuais (reconciliação final 2026-11-04):** T001–T014 reconhecidos como executados e aprovados pela operadora no Supabase Studio local; não foram repetidos. GATE-006 aprovado com base no relatório manual, inspeção das RPCs/constraints e testes automatizados TASK-009 existentes/CI `41762520549`, que corroboram retorno e ledger idempotentes, rollback integral, descarte sem devolução, agregação de pedido misto e ocorrência idempotente sem integração de mensageria. Ausência de alguns requests/responses e resultsets históricos brutos é limitação documental registrada, não reprovação funcional. Evidências em `docs/testing/TASK-009-etapa-006-testes-manuais.md` e `docs/reports/TASK-009-etapa-006-auditoria-complementar-2026-11-04.md`. **GATE-006 = CONCLUÍDO/APROVADO (14/14); Etapa 007 habilitada para execução futura, ainda não iniciada.** Nenhum código ou banco alterado.
+- **Etapa 007 — Conclusão (2026-11-04):** GATE-007 APROVADO; relatório `docs/reports/TASK-009-etapa-007-conclusao.md`. GATE-001–007 concluídos; TASK-009 marcada DONE conforme decisão explícita da solicitante para resolver a divergência entre `AGENTS.md` e o prompt da etapa. Scope Guard PASS; somente documentação/estado da TASK-009 alterados, sem alteração funcional, de migration ou banco. T001–T014 aceitos conforme relato manual da operadora, com CI e testes automatizados/inspeção estática como evidência complementar; limitações de retenção dos artefatos brutos estão registradas. `git diff --check` PASS. Texto aprovado de `ORDER_CANCELLATION_POLICY_TEXT` e configuração operacional são pré-requisitos para uso com pagamentos reais, sem bloquear o fechamento de desenvolvimento. Nenhuma TASK posterior iniciada.
 - **Validação:** matriz de transição, devolução seletiva, abuso de permissão e auditoria.
 - **DoD:** política informativa aprovada visível antes de pagamento; nenhuma regra financeira calculada.
 
@@ -240,18 +243,26 @@ Estados: `BLOCKED`, `READY`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELLED`. Es
 
 ## TASK-011 — Relatórios, exportações e métricas
 
-- **Status:** BLOCKED | **DEPENDS_ON:** TASK-005, TASK-007, TASK-008, TASK-009 | **Rastreabilidade:** RF-018; RN-017; RNF-006; UC-08.
+- **Status:** IN_PROGRESS | **Branch:** task/TASK-011-relatorios-exportacoes-metricas | **DEPENDS_ON:** TASK-005, TASK-007, TASK-008, TASK-009 | **Rastreabilidade:** RF-018; RN-017; RNF-006; UC-08.
 - **Objetivo:** relatórios semanais/mensais e exportações Excel/PDF disponíveis apenas ao administrador.
 - **Allowed Changes:** consultas agregadas, filtros, geração XLSX/PDF, registro de exportação.
 - **Incidental:** otimizações/índices locais ao relatório.
 - **Forbidden:** relatórios para equipe; exportações públicas; esconder cancelamentos; faturamento confundido com pedidos não pagos; incluir todos os dados pessoais sem necessidade.
-- **Aceite:** faturamento por data de criação e data de pagamento claramente separados; mais/menos vendidos, carrinho, favoritos; seletor Excel ou PDF; conteúdo consistente com filtros; somente administrador.
-- **Pendente:** definição de semana, tratamento de cupom/cancelamento no faturamento e escopo de PII exportada.
-- **Validação:** fixtures sintéticas contra totais calculados e autorização.
-- **DoD:** export temporário protegido e com auditoria; relatórios explicam base temporal.
+- **Aceite:** faturamento por data de criação e data de confirmação do pagamento separadas; rankings de produtos; métricas de carrinho/favoritos; Excel/PDF; conteúdo consistente com filtros; somente admin; exportações agregadas sem PII direta e com referência opaca apenas quando necessária.
+- **Decisões aprovadas pela solicitante:** semana de segunda a domingo em America/Sao_Paulo; faturamento somente de pagamentos confirmados, líquido do cupom, excluindo pedidos não pagos e cancelados antes do pagamento; cancelamentos pós-pagamento apresentados separadamente, sem presumir reembolso; exportações agregadas com referência opaca quando necessária e sem nome, contato, CPF ou endereço.
+- **Validação:** fixtures sintéticas contra totais calculados, filtros, formatos e autorização; regressão das dependências; integração em Supabase efêmero.
+- **DoD:** export temporário protegido e auditado; relatórios explicam bases temporais; evidências e limitações documentadas.
+- **Etapa 001 — Recontextualização:** GATE-001 APROVADO. Branch TASK-011 criada em c1cb4b8; integração da TASK-009 no commit fca96ed. Confirmações de ancestralidade e conflitos resolvidos em docs/reports/TASK-011-etapa-001-recontextualizacao.md.
+- **Etapa 002 — DoR:** GATE-002 APROVADO; dependências DONE e integradas, rastreabilidade e decisões aprovadas documentadas, ambiente de validação sintética disponível. Evidências em `docs/reports/TASK-011-etapa-002-pre-condicoes.md`.
+
+**TASK-011 — Estado das etapas:**
+
+- **Etapa 003 — Planejamento:** GATE-003 APROVADO; critérios, arquitetura, arquivos, sequência, testes, riscos e rollback registrados em `docs/reports/TASK-011-etapa-003-planejamento.md`. Etapa 004 iniciada.
+- **Etapa 004 — Implementação (2026-11-08):** implementação do painel admin, métricas agregadas, filtros de período, exportações XLSX/PDF e auditoria aditiva concluída. Testes direcionados 13/13 PASS/0 SKIP; lint direcionado, typecheck e build PASS. A integração Supabase real e aplicação da migration não foram executadas localmente porque Docker Engine está inacessível; workflow efêmero configurado, mas ainda sem resultado de CI. **GATE-004 = PENDENTE** até CI executar migrations e teste integrado sem SKIP. Relatório: `docs/reports/TASK-011-etapa-004-implementacao.md`.
+- **Etapa 005 — Revisão:** revisão estática sem achado P1/P2 funcional, mas GATE-005 permanece PENDENTE: integração do GATE-004 aguarda CI e `npm run test:task006` falhou na base integrada porque o teste espera `couponCode` ausente e o parser retorna `null`. Nenhum arquivo TASK-006 foi alterado; a falha está registrada para triagem na tarefa proprietária. Relatório: `docs/reports/TASK-011-etapa-005-revisao.md`.
+- **Etapa 006 — Testes manuais:** roteiro T001–T011 preparado em `docs/testing/TASK-011-etapa-006-testes-manuais.md`; testes manuais NOT RUN pelo Codex. GATE-006 não aprovado; aguarda gates anteriores e execução/evidências da operadora.
 
 ## TASK-012 — Direção visual, idiomas e acessibilidade
-
 - **Status:** BLOCKED | **DEPENDS_ON:** TASK-001, TASK-004 | **Rastreabilidade:** RF-001/019; RNF-002/007; UC-01; ADR-004.
 - **Objetivo:** aplicar identidade visual gótica/industrial e experiência não convencional sem comprometer compra acessível.
 - **Allowed Changes:** componentes/styles; tokens cor/tipografia; microinterações; layouts responsivos; seletor de idioma; conteúdo institucional configurável.
