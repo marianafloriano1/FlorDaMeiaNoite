@@ -175,6 +175,11 @@ test("TASK-008: Supabase isolado valida resgate, desconto, idempotência e CartE
     .from("coupon_redemptions")
     .select("id,status")
     .eq("order_id", (order.data as { id: string }).id);
+  assert.equal(
+    redemption.error,
+    null,
+    `Erro ao consultar coupon_redemptions: ${redemption.error?.message ?? "erro desconhecido"}`,
+  );
   assert.equal(redemption.data?.length, 1);
   const replay = await winnerClient.rpc("create_order_from_quote_with_coupon", {
     p_quote_id: winningQuoteId,

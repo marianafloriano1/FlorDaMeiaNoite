@@ -87,7 +87,7 @@ alter table public.order_events
   drop constraint order_events_event_type_check,
   add constraint order_events_event_type_check check (event_type in (
     'created', 'inspection_recorded', 'inspection_approved', 'payment_confirmed',
-    'status_changed', 'cancelled', 'pickup_scheduled', 'item_classified',
+    'status_changed', 'cancelled', 'coupon_applied', 'pickup_scheduled', 'item_classified',
     'item_cancelled', 'item_discarded', 'cancellation_agreement_confirmed', 'issue_recorded'
   ));
 
