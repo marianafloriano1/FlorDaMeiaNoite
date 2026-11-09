@@ -75,3 +75,7 @@ max_frequency = "60s"
 [auth.hook.send_sms]
 enabled = true
 uri = "pg-functions://postgres/public/capture_local_sms_otp"
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

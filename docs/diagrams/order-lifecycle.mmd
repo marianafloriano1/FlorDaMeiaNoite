@@ -3,9 +3,17 @@ stateDiagram-v2
   AguardandoPagamento --> EmPreparo: administrador aprova e confirma pagamento
   AguardandoPagamento --> Cancelado: expira 3h / devolve reserva
   AguardandoPagamento --> Cancelado: administrador cancela / item não preparado
-  EmPreparo --> ProntoRetirada: equipe atualiza
-  EmPreparo --> Cancelado: administrador cancela / seleciona itens já usados
-  ProntoRetirada --> Retirado: equipe confirma retirada
-  ProntoRetirada --> Cancelado: administrador encerra após prazo / regra aplicável
+  EmPreparo --> ProntoRetirada: employee conclui preparo
+  EmPreparo --> Cancelado: admin cancela após resolver as linhas
+  ProntoRetirada --> Retirado: employee confirma retirada
+  ProntoRetirada --> Cancelado: admin cancela após resolver as linhas / acordo se pago
   Cancelado --> [*]
   Retirado --> [*]
+
+  %% As transições agregadas de cancelamento só fecham quando todas as linhas estão resolvidas.
+  %% Admin classifica manualmente cada linha como perecível/não perecível.
+  %% Perecível não retirado: admin marca a linha discarded após 3 dias úteis
+  %% (segunda a sábado; feriados não excluídos); estoque descartado não retorna.
+  %% Não perecível: admin pode cancelar após 7 dias corridos da data combinada.
+  %% Retirada, cancelamento ou descarte ficam registrados por linha; pedido misto
+  %% só é terminal depois que todas as linhas forem resolvidas.

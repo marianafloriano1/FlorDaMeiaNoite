@@ -3,7 +3,16 @@ export type OrderStatus =
   | "preparing"
   | "ready_for_pickup"
   | "picked_up"
-  | "cancelled";
+  | "cancelled"
+  | "resolved";
+
+export type OrderItemLifecycle = {
+  id: string;
+  perishability: "perishable" | "non_perishable" | null;
+  line_status: "open" | "picked_up" | "cancelled" | "discarded";
+  quantity_used: number;
+  resolved_at: string | null;
+};
 
 export type OrderQuoteLine = {
   product_id: string;
